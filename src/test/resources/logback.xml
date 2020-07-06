@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%-5level] %logger{15} - %msg%n%rEx</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <file>target/gatling/gatling.log</file>
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%-5level] %logger{15} - %msg%n%rEx</pattern>
+        </encoder>
+    </appender>
+
+    <!--pass param -DloggingLevel=DEBUG to log all failing HTTP requests or -DloggingLevel=OFF to disable logging-->
+    <logger name="io.gatling.http.engine.response.DefaultStatsProcessor" level="DEBUG"/>
+
+    <!--show passed parameters on simulation startup-->
+    <logger name="ru.tinkoff.gatling" level="INFO"/>
+
+    <!--uncomment FILE appender and set suitable root level to write logs into FILE-->
+    <!--e.g. <root level="TRACE"> to log all http requests in FILE-->
+    <!--e.g. <root level="DEBUG"> to log all failing http requests in FILE-->
+    <root level="ERROR">
+        <appender-ref ref="CONSOLE" />
+        <!--<appender-ref ref="FILE" />-->
+    </root>
+
+</configuration>

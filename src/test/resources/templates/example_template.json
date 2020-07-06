@@ -1,0 +1,7 @@
+{
+    "type": "login,
+    "data":{
+        "login": ${login},
+        "password": ${password}
+    }
+}
