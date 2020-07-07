@@ -1,6 +1,6 @@
 import Dependencies._
 
-enablePlugins(GatlingPlugin)
+enablePlugins(GatlingPlugin, GitVersioning)
 
 lazy val root = (project in file("."))
   .settings(
