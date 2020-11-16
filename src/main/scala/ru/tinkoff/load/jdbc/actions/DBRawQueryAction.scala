@@ -37,7 +37,7 @@ case class DBRawQueryAction(requestName: Expression[String], query: Expression[S
         ))
       .onFailure(m =>
         requestName(session).map { rn =>
-          ctx.coreComponents.statsEngine.logCrash(session, rn, m)
+          ctx.coreComponents.statsEngine.logCrash(session.scenario, session.groups, rn, m)
           executeNext(session,
                       ctx.coreComponents.clock.nowMillis,
                       ctx.coreComponents.clock.nowMillis,
