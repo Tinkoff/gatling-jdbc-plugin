@@ -23,8 +23,7 @@ trait ActionBase {
       responseCode: Option[String],
       message: Option[String]
   ): Unit = {
-    ctx.coreComponents.statsEngine.logResponse(session, requestName, sent, received, status, responseCode, message)
-    val s = session.logGroupRequestTimings(sent, received)
-    next ! s.copy(drift = ctx.coreComponents.clock.nowMillis - received + s.drift)
+    ctx.coreComponents.statsEngine.logResponse(session.scenario, session.groups, requestName, sent, received, status, responseCode, message)
+    next ! session.logGroupRequestTimings(sent, received)
   }
 }
