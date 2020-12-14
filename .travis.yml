@@ -1,0 +1,11 @@
+language: scala
+
+jdk:
+  - openjdk11
+
+jobs:
+  include:
+    - stage: Tests
+      name: Unit tests
+      script:
+        - sbt compile test
