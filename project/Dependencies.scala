@@ -1,9 +1,10 @@
 import sbt._
 
 object Dependencies {
+  val gatlingVersion = "3.5.0"
   lazy val gatling: Seq[ModuleID] = Seq(
-    "io.gatling" % "gatling-core"           % "3.4.1" % "provided",
-    "io.gatling" % "gatling-test-framework" % "3.4.1" % "provided"
+    "io.gatling" % "gatling-core"           % gatlingVersion % "provided",
+    "io.gatling" % "gatling-test-framework" % gatlingVersion % "provided"
   )
 
   lazy val hikari = "com.zaxxer" % "HikariCP" % "3.4.5"
