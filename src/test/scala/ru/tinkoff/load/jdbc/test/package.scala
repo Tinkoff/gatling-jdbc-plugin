@@ -37,5 +37,6 @@ package object test {
     .url("jdbc:h2:mem:test")
     .username("sa")
     .password("")
+    .defaultConnectionSettings
 
 }

@@ -14,17 +14,12 @@ object JdbcProtocol {
 
     override def newComponents(coreComponents: CoreComponents): JdbcProtocol => JdbcComponents =
       protocol => {
-        val hikariConfig = new HikariConfig()
-        hikariConfig.setUsername(protocol.username)
-        hikariConfig.setPassword(protocol.password)
-        hikariConfig.setJdbcUrl(protocol.url)
-
-        JdbcComponents(new HikariDataSource(hikariConfig))
+        JdbcComponents(new HikariDataSource(protocol.hikariConfig))
       }
   }
 
 }
 
-case class JdbcProtocol(username: String, password: String, url: String) extends Protocol {
+case class JdbcProtocol(hikariConfig: HikariConfig) extends Protocol {
   type Components = JdbcComponents
 }
