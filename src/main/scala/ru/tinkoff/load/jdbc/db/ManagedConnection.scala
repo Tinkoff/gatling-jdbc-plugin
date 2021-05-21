@@ -71,4 +71,22 @@ case class ManagedConnection(connection: Connection) {
       prepareStatement(sql, params.toMap, Map.empty, (sql, c) => c.prepareStatement(sql)),
       s => Try(s.close())
     )(stmt => Try(stmt.executeQuery().iterator.toList))
+
+  def batch(queries: Seq[SqlWithParam], batchSize: Int = 1000): Try[List[Int]] =
+    for {
+      stmt <- Try(connection.createStatement())
+      intermediateResult <- queries
+                             .map(_.substituteParams)
+                             .foldLeft(Try(List.empty[Int], 0))((r, q) =>
+                               r.flatMap {
+                                 case (lr, counter) =>
+                                   for {
+                                     lr <- Try(if (counter % batchSize == 0) lr ++ stmt.executeBatch() else lr)
+                                     _  <- Try(stmt.addBatch(q))
+                                   } yield (lr, counter + 1)
+                             })
+                             .map(_._1)
+      r <- Try(intermediateResult ++ stmt.executeBatch())
+      _ <- Try(stmt.close())
+    } yield r
 }

@@ -1,8 +1,7 @@
 package ru.tinkoff.load.jdbc
 
 import java.sql.ResultSet
-import java.time.LocalDateTime
-
+import java.time.{LocalDateTime, OffsetDateTime}
 import scala.util.Try
 
 package object db {
@@ -38,13 +37,36 @@ package object db {
   }
 
   case class SqlWithParam(sql: String, params: Seq[(String, ParamVal)], outParams: Seq[(String, Int)] = Seq.empty) {
+    private val paramsMap = params.toMap
+    private def paramValueToSql(name: String) =
+      paramsMap.get(name) match {
+        case Some(IntParam(v))    => s"$v"
+        case Some(DoubleParam(v)) => s"$v"
+        case Some(StrParam(v))    => s"'$v'"
+        case Some(LongParam(v))   => s"$v"
+        case Some(NullParam)      => "NULL"
+        case Some(DateParam(v))   => s"CAST(${v.toInstant(OffsetDateTime.now().getOffset).toEpochMilli} AS DATE)"
+        case None                 => ""
+      }
+
+    def substituteParams: String = {
+      sql
+        .foldLeft(("", "", false)) {
+          case ((r, curName, false), '{') => (r, curName, true)
+          case ((r, curName, true), '}')  => (s"$r ${paramValueToSql(curName.trim)}", "", false)
+          case ((r, curName, true), c)    => (r, s"$curName$c", true)
+          case ((r, curName, false), c)   => (s"$r$c", curName, false)
+        }
+        ._1
+    }
+
     def withOutParams(ps: Seq[(String, Int)]): SqlWithParam = SqlWithParam(sql, params, ps)
 
     def executeInsert(implicit managedConnection: ManagedConnection): Try[Int] = managedConnection.execute(sql, params)
 
     def call(implicit managedConnection: ManagedConnection): Try[Int] = managedConnection.call(sql, params, outParams)
 
-    def executeQuery(implicit managedConnection: ManagedConnection): Try[List[Map[String,Any]]] =
+    def executeQuery(implicit managedConnection: ManagedConnection): Try[List[Map[String, Any]]] =
       managedConnection.execSelect(sql, params)
   }
 

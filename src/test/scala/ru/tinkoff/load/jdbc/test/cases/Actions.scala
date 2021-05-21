@@ -7,11 +7,13 @@ import ru.tinkoff.load.jdbc.actions.Columns
 
 object Actions {
 
-  def createTable(): actions.RawSqlActionBuilder = jdbc("Create Table")
-    .rawSql("CREATE TABLE TEST_TABLE (ID INT PRIMARY KEY, NAME VARCHAR(64));")
+  def createTable(): actions.RawSqlActionBuilder =
+    jdbc("Create Table")
+      .rawSql("CREATE TABLE TEST_TABLE (ID INT PRIMARY KEY, NAME VARCHAR(64));")
 
-  def createProcedure(): actions.RawSqlActionBuilder = jdbc("Procedure create")
-    .rawSql("""CREATE ALIAS TEST_PROCEDURE AS $$
+  def createProcedure(): actions.RawSqlActionBuilder =
+    jdbc("Procedure create")
+      .rawSql("""CREATE ALIAS TEST_PROCEDURE AS $$
               |String testProcedure(String p1, Long p2) {
               |    String suf = p1 + "test";
               |    return p2.toString() + suf;
@@ -28,18 +30,33 @@ object Actions {
       .call("TEST_PROCEDURE")
       .params("p1" -> "value1", "p2" -> 24L)
 
-  def selectTest: actions.QueryActionBuilder = jdbc("SELECT TEST")
-    .queryP("SELECT * FROM TEST_TABLE WHERE ID = {id}")
-    .params("id" -> 1)
-    .check(
-    allRecordsCheck{
-      r =>
-        r.isEmpty
-    },
-    allResults.is(List(
-      Map("ID"-> 1, "NAME" -> "Test3")
-    )),
-    allResults.saveAs("R")
+  def batchTest: actions.BatchActionBuilder = jdbc("Batch records").batch(
+    insertInto("TEST_TABLE", Columns("ID", "NAME")).values("ID" -> 2, "NAME" -> "Test 56"),
+    insertInto("TEST_TABLE", Columns("ID", "NAME")).values("ID" -> 3, "NAME" -> "Test 78"),
+    update("TEST_TABLE").set("NAME" -> "TEST 5").where("ID = 2"),
+//    update("TEST_TABLE").set("NAME" -> "bird").all
   )
+
+  def selectTest: actions.QueryActionBuilder =
+    jdbc("SELECT TEST")
+      .queryP("SELECT * FROM TEST_TABLE WHERE ID = {id}")
+      .params("id" -> 1)
+      .check(
+        allRecordsCheck { r =>
+          r.isEmpty
+        },
+        allResults.is(
+          List(
+            Map("ID" -> 1, "NAME" -> "Test3")
+          )),
+        allResults.saveAs("R")
+      )
+
+  def selectAfterBatch: actions.QueryActionBuilder =
+    jdbc("SELECT SOME")
+      .query("SELECT * FROM TEST_TABLE")
+      .check(
+        allResults.saveAs("RR")
+      )
 
 }

@@ -26,4 +26,15 @@ case class ConnectedDB(pool: HikariDataSource) {
       result <- exec(ManagedConnection(c))
       _      <- Try(c.close())
     } yield result
+
+  def executeBatch(implicit exec: ManagedConnection => Try[List[Int]]): Try[List[Int]] =
+    for {
+      c          <- Try(pool.getConnection)
+      autoCommit <- Try(c.getAutoCommit)
+      _          <- Try(c.setAutoCommit(false))
+      result     <- exec(ManagedConnection(c))
+      _          <- Try(c.commit())
+      _          <- Try(c.setAutoCommit(autoCommit))
+      _          <- Try(c.close())
+    } yield result
 }
