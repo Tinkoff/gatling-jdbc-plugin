@@ -25,22 +25,12 @@ case class JdbcProtocolBuilderPasswordStep(url: String, username: String) {
 
 }
 
-final case class JdbcProtocolBuilderConnectionSettingsStep(url: String, username: String, password: String) {
-  def maximumPoolSize(newValue: Int): JdbcProtocolBuilder =
-    ToConfigStep(url, username, password, maximumPoolSize = newValue).protocolBuilder
-  def minimumIdleConnections(newValue: Int): JdbcProtocolBuilder =
-    ToConfigStep(url, username, password, minimumIdleConnections = newValue).protocolBuilder
-  def connectionTimeout(newValue: FiniteDuration): JdbcProtocolBuilder =
-    ToConfigStep(url, username, password, connectionTimeout = newValue).protocolBuilder
-  def defaultConnectionSettings: JdbcProtocolBuilder = ToConfigStep(url, username, password).protocolBuilder
-}
-
-final case class ToConfigStep(url: String,
-                              username: String,
-                              password: String,
-                              maximumPoolSize: Int = 10,
-                              minimumIdleConnections: Int = 10,
-                              connectionTimeout: FiniteDuration = 1.minute) {
+final case class JdbcProtocolBuilderConnectionSettingsStep(url: String,
+                                                           username: String,
+                                                           password: String,
+                                                           maximumPoolSize: Int = 10,
+                                                           minimumIdleConnections: Int = 10,
+                                                           connectionTimeout: FiniteDuration = 1.minute) {
   def protocolBuilder: JdbcProtocolBuilder = {
     val hikariConfig = new HikariConfig()
 
@@ -53,6 +43,13 @@ final case class ToConfigStep(url: String,
 
     JdbcProtocolBuilder(hikariConfig)
   }
+
+  def maximumPoolSize(newValue: Int): JdbcProtocolBuilderConnectionSettingsStep =
+    this.copy(maximumPoolSize = newValue)
+  def minimumIdleConnections(newValue: Int): JdbcProtocolBuilderConnectionSettingsStep =
+    this.copy(minimumIdleConnections = newValue)
+  def connectionTimeout(newValue: FiniteDuration): JdbcProtocolBuilderConnectionSettingsStep =
+    this.copy(connectionTimeout = newValue)
 }
 
 final case class JdbcProtocolBuilder(hikariConfig: HikariConfig) {

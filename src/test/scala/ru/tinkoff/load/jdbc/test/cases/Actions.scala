@@ -33,9 +33,10 @@ object Actions {
       .params("p1" -> "value1", "p2" -> 24L)
 
   def batchTest: actions.BatchActionBuilder = jdbc("Batch records").batch(
-    insertInto("TEST_TABLE", Columns("ID", "NAME")).values("ID" -> 2, "NAME" -> "Test 56"),
+    insertInto("TEST_TABLE", Columns("ID", "NAME")).values("ID" -> 2, "NAME" -> "Test 12"),
+    insertInto("TEST_TABLE", Columns("ID", "NAME")).values("ID" -> 4, "NAME" -> "Test 34"),
     insertInto("TEST_TABLE", Columns("ID", "NAME", "CREATED_AT"))
-      .values("ID" -> 3, "NAME" -> "Test 78", "CREATED_AT" -> LocalDateTime.now().minusMonths(6)),
+      .values("ID" -> 3, "NAME" -> "Test  ${i}", "CREATED_AT" -> LocalDateTime.now().minusMonths(6)),
     update("TEST_TABLE").set("NAME" -> "TEST 5").where("ID = 2"),
 //    update("TEST_TABLE").set("NAME" -> "bird").all
   )

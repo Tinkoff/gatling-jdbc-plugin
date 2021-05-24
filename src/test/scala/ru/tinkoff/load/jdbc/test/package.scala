@@ -3,6 +3,7 @@ package ru.tinkoff.load.jdbc
 import ru.tinkoff.load.jdbc.Predef._
 import ru.tinkoff.load.jdbc.protocol.JdbcProtocolBuilder
 
+import scala.concurrent.duration._
 import scala.util.Random
 
 package object test {
@@ -37,6 +38,7 @@ package object test {
     .url("jdbc:h2:mem:test")
     .username("sa")
     .password("")
-    .defaultConnectionSettings
+    .maximumPoolSize(23)
+    .connectionTimeout(2.minute)
 
 }
