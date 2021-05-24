@@ -45,7 +45,7 @@ package object db {
         case Some(StrParam(v))    => s"'$v'"
         case Some(LongParam(v))   => s"$v"
         case Some(NullParam)      => "NULL"
-        case Some(DateParam(v))   => s"CAST(${v.toInstant(OffsetDateTime.now().getOffset).toEpochMilli} AS DATE)"
+        case Some(DateParam(v))   => s"CAST('$v' AS TIMESTAMP)"
         case None                 => ""
       }
 
