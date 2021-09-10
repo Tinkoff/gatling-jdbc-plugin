@@ -1,9 +1,7 @@
 package ru.tinkoff.load.jdbc.actions
 
-import java.util.{HashMap => JHashMap}
-
 import io.gatling.commons.stats.{KO, OK}
-import io.gatling.commons.validation._
+import io.gatling.commons.validation.{Failure => GFailure, _}
 import io.gatling.core.action.{Action, ChainableAction}
 import io.gatling.core.check.Check
 import io.gatling.core.session.{Expression, Session}
@@ -11,6 +9,8 @@ import io.gatling.core.structure.ScenarioContext
 import io.gatling.core.util.NameGen
 import ru.tinkoff.load.jdbc.JdbcCheck
 import ru.tinkoff.load.jdbc.db.SQL
+
+import java.util.{HashMap => JHashMap}
 
 case class DBQueryAction(
     requestName: Expression[String],
@@ -38,24 +38,14 @@ case class DBQueryAction(
       startTime       <- ctx.coreComponents.clock.nowMillis.success
 
     } yield
-      db.executeQuery(implicit c => parametrisedSql.executeQuery)
-        .fold(
-          e => {
-            executeNext(session,
-                        startTime,
-                        ctx.coreComponents.clock.nowMillis,
-                        KO,
-                        next,
-                        resolvedName,
-                        Some("ERROR"),
-                        Some(e.getMessage))
-          },
-          r => {
+      dbClient
+        .executeSelect(parametrisedSql.sql, parametrisedSql.params)(
+          value => {
             val received            = ctx.coreComponents.clock.nowMillis
-            val (newSession, error) = Check.check(r, session, checks.toList, new JHashMap[Any, Any]())
+            val (newSession, error) = Check.check(value, session, checks.toList, new JHashMap[Any, Any]())
 
             error match {
-              case Some(Failure(errorMessage)) =>
+              case Some(GFailure(errorMessage)) =>
                 executeNext(newSession.markAsFailed,
                             startTime,
                             received,
@@ -66,7 +56,16 @@ case class DBQueryAction(
                             Some(errorMessage))
               case _ => executeNext(newSession, startTime, received, OK, next, resolvedName, None, None)
             }
-          }
+          },
+          exception =>
+            executeNext(session,
+                        startTime,
+                        ctx.coreComponents.clock.nowMillis,
+                        KO,
+                        next,
+                        resolvedName,
+                        Some("ERROR"),
+                        Some(exception.getMessage))
         ))
       .onFailure(m =>
         requestName(session).map { rn =>

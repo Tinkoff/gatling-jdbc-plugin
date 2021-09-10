@@ -4,6 +4,9 @@ import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
 import io.gatling.core.CoreComponents
 import io.gatling.core.config.GatlingConfiguration
 import io.gatling.core.protocol.{Protocol, ProtocolKey}
+import ru.tinkoff.load.jdbc.db.JDBCClient
+
+import java.util.concurrent.Executors
 
 object JdbcProtocol {
   val jdbcProtocolKey: ProtocolKey[JdbcProtocol, JdbcComponents] = new ProtocolKey[JdbcProtocol, JdbcComponents] {
@@ -14,7 +17,9 @@ object JdbcProtocol {
 
     override def newComponents(coreComponents: CoreComponents): JdbcProtocol => JdbcComponents =
       protocol => {
-        JdbcComponents(new HikariDataSource(protocol.hikariConfig))
+        val blockingPool   = Executors.newCachedThreadPool()
+        val connectionPool = new HikariDataSource(protocol.hikariConfig)
+        JdbcComponents(JDBCClient(connectionPool, blockingPool))
       }
   }
 

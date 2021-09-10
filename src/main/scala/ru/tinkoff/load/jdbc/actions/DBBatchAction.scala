@@ -1,11 +1,11 @@
 package ru.tinkoff.load.jdbc.actions
 
 import io.gatling.commons.stats.{KO, OK}
+import io.gatling.commons.validation._
 import io.gatling.core.action.{Action, ChainableAction}
 import io.gatling.core.session.{Expression, Session}
 import io.gatling.core.structure.ScenarioContext
 import io.gatling.core.util.NameGen
-import io.gatling.commons.validation._
 import ru.tinkoff.load.jdbc.db.{SQL, SqlWithParam}
 
 final case class DBBatchAction(
@@ -58,16 +58,16 @@ final case class DBBatchAction(
       } yield sql
   }
 
-  override protected def execute(session: Session): Unit =
+  override protected def execute(session: Session): Unit = {
     (for {
       resolvedBatchName    <- batchName(session)
       sqlQueriesWithParams <- actions.traverse(resolveBatchAction(session))
       startTime            <- ctx.coreComponents.clock.nowMillis.success
     } yield
-      db.executeBatch(implicit c => c.batch(sqlQueriesWithParams))
-        .fold(
-          e => {
-            println(s"ERROR: ${e.getMessage}")
+      dbClient
+        .batch(sqlQueriesWithParams)(
+          _ => executeNext(session, startTime, ctx.coreComponents.clock.nowMillis, OK, next, resolvedBatchName, None, None),
+          e =>
             executeNext(session,
                         startTime,
                         ctx.coreComponents.clock.nowMillis,
@@ -76,18 +76,18 @@ final case class DBBatchAction(
                         resolvedBatchName,
                         Some("ERROR"),
                         Some(e.getMessage))
-          },
-          _ => executeNext(session, startTime, ctx.coreComponents.clock.nowMillis, OK, next, resolvedBatchName, None, None)
-        )).onFailure(m =>
-      batchName(session).map { rn =>
-        ctx.coreComponents.statsEngine.logCrash(session.scenario, session.groups, rn, m)
-        executeNext(session,
-                    ctx.coreComponents.clock.nowMillis,
-                    ctx.coreComponents.clock.nowMillis,
-                    KO,
-                    next,
-                    rn,
-                    Some("ERROR"),
-                    Some(m))
-    })
+        ))
+      .onFailure(m =>
+        batchName(session).map { rn =>
+          ctx.coreComponents.statsEngine.logCrash(session.scenario, session.groups, rn, m)
+          executeNext(session,
+                      ctx.coreComponents.clock.nowMillis,
+                      ctx.coreComponents.clock.nowMillis,
+                      KO,
+                      next,
+                      rn,
+                      Some("ERROR"),
+                      Some(m))
+      })
+  }
 }
