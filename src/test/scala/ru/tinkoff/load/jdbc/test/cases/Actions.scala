@@ -25,7 +25,7 @@ object Actions {
   def insertTest(): actions.DBInsertActionBuilder =
     jdbc("INSERT TEST")
       .insertInto("TEST_TABLE", Columns("ID", "NAME"))
-      .values("ID" -> 1, "NAME" -> "Test3")
+      .values("ID" -> "${i}", "NAME" -> "Test3")
 
   def callTest(): actions.DBCallActionBuilder =
     jdbc("CALL PROCEDURE TEST")
@@ -33,10 +33,10 @@ object Actions {
       .params("p1" -> "value1", "p2" -> 24L)
 
   def batchTest: actions.BatchActionBuilder = jdbc("Batch records").batch(
-    insertInto("TEST_TABLE", Columns("ID", "NAME")).values("ID" -> 2, "NAME" -> "Test 12"),
-    insertInto("TEST_TABLE", Columns("ID", "NAME")).values("ID" -> 4, "NAME" -> "Test 34"),
+    insertInto("TEST_TABLE", Columns("ID", "NAME")).values("ID" -> 20, "NAME" -> "Test 12"),
+    insertInto("TEST_TABLE", Columns("ID", "NAME")).values("ID" -> 40, "NAME" -> "Test 34"),
     insertInto("TEST_TABLE", Columns("ID", "NAME", "CREATED_AT"))
-      .values("ID" -> 3, "NAME" -> "Test  ${i}", "CREATED_AT" -> LocalDateTime.now().minusMonths(6)),
+      .values("ID" -> 30, "NAME" -> "Test  ${i}", "CREATED_AT" -> LocalDateTime.now().minusMonths(6)),
     update("TEST_TABLE").set("NAME" -> "TEST 5").where("ID = 2"),
 //    update("TEST_TABLE").set("NAME" -> "bird").all
   )
@@ -47,12 +47,8 @@ object Actions {
       .params("id" -> 1)
       .check(
         allRecordsCheck { r =>
-          r.isEmpty
+          r.nonEmpty
         },
-        allResults.is(
-          List(
-            Map("ID" -> 1, "NAME" -> "Test3")
-          )),
         allResults.saveAs("R")
       )
 

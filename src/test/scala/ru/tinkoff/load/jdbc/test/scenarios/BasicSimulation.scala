@@ -1,8 +1,11 @@
 package ru.tinkoff.load.jdbc.test.scenarios
 
 import io.gatling.core.Predef._
+import io.gatling.core.feeder.{Feeder, Record}
 import io.gatling.core.structure.ScenarioBuilder
 import ru.tinkoff.load.jdbc.test.cases.Actions
+
+import java.util.concurrent.atomic.AtomicLong
 
 object BasicSimulation {
   def apply(): ScenarioBuilder = new BasicSimulation().scn
@@ -10,13 +13,18 @@ object BasicSimulation {
 }
 
 class BasicSimulation {
+  val c               = new AtomicLong(1)
+  val f: Feeder[Long] = Iterator.continually(c.getAndIncrement()).map(i => Map("i" -> i))
 
   val scn: ScenarioBuilder = scenario("Basic")
     .exec(Actions.createTable())
     .exec(Actions.createProcedure())
-    .exec(Actions.insertTest())
-    .exec(Actions.callTest())
-    .exec(Actions.selectTest)
+    .doWhile(_("i").as[Long] < 19)(
+      feed(f)
+        .exec(Actions.insertTest())
+        .exec(Actions.callTest())
+        .exec(Actions.selectTest)
+    )
     .exec(Actions.batchTest)
     .exec(Actions.selectAfterBatch)
     .exec { s =>

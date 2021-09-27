@@ -4,14 +4,14 @@ import io.gatling.commons.stats.Status
 import io.gatling.core.action.Action
 import io.gatling.core.session.Session
 import io.gatling.core.structure.ScenarioContext
-import ru.tinkoff.load.jdbc.db.ConnectedDB
+import ru.tinkoff.load.jdbc.db.JDBCClient
 import ru.tinkoff.load.jdbc.protocol.JdbcProtocol
 
 trait ActionBase {
   val ctx: ScenarioContext
 
-  private val jdbcComponents    = ctx.protocolComponentsRegistry.components(JdbcProtocol.jdbcProtocolKey)
-  protected val db: ConnectedDB = ConnectedDB(jdbcComponents.pool)
+  private val jdbcComponents         = ctx.protocolComponentsRegistry.components(JdbcProtocol.jdbcProtocolKey)
+  protected val dbClient: JDBCClient = jdbcComponents.client
 
   protected def executeNext(
       session: Session,

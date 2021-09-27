@@ -1,8 +1,7 @@
 package ru.tinkoff.load.jdbc
 
 import java.sql.ResultSet
-import java.time.{LocalDateTime, OffsetDateTime}
-import scala.util.Try
+import java.time.LocalDateTime
 
 package object db {
 
@@ -28,12 +27,6 @@ package object db {
         case (k, v: LocalDateTime) => (k, DateParam(v))
         case (k, v)                => (k, StrParam(v.toString))
       }.toSeq: _*)
-
-    def executeInsert(implicit managedConnection: ManagedConnection): Try[Int] = managedConnection.execute(q)
-
-    def call(implicit managedConnection: ManagedConnection): Try[Int] = managedConnection.call(q)
-
-    def executeRaw(implicit managedConnection: ManagedConnection): Try[Unit] = managedConnection.execRaw(q)
   }
 
   case class SqlWithParam(sql: String, params: Seq[(String, ParamVal)], outParams: Seq[(String, Int)] = Seq.empty) {
@@ -61,13 +54,6 @@ package object db {
     }
 
     def withOutParams(ps: Seq[(String, Int)]): SqlWithParam = SqlWithParam(sql, params, ps)
-
-    def executeInsert(implicit managedConnection: ManagedConnection): Try[Int] = managedConnection.execute(sql, params)
-
-    def call(implicit managedConnection: ManagedConnection): Try[Int] = managedConnection.call(sql, params, outParams)
-
-    def executeQuery(implicit managedConnection: ManagedConnection): Try[List[Map[String, Any]]] =
-      managedConnection.execSelect(sql, params)
   }
 
   private def record(resultSet: ResultSet): Map[String, Any] = {
@@ -88,5 +74,4 @@ package object db {
       }
 
   }
-
 }

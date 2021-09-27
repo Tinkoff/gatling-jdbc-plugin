@@ -9,6 +9,6 @@ class DebugTest extends Simulation {
   setUp(
     BasicSimulation().inject(atOnceUsers(1))
   ).protocols(dataBase)
-    .maxDuration(8)
+    .maxDuration(60)
 
 }

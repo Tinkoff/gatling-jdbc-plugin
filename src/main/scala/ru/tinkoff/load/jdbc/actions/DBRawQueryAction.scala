@@ -20,10 +20,10 @@ case class DBRawQueryAction(requestName: Expression[String], query: Expression[S
       startTime     <- ctx.coreComponents.clock.nowMillis.success
 
     } yield
-      db.executeRaw(implicit c => sql.executeRaw)
-        .fold(
-          e => {
-            println(s"ERROR: ${e.getMessage}")
+      dbClient
+        .executeRaw(sql.q)(
+          _ => executeNext(session, startTime, ctx.coreComponents.clock.nowMillis, OK, next, resolvedName, None, None),
+          exception =>
             executeNext(session,
                         startTime,
                         ctx.coreComponents.clock.nowMillis,
@@ -31,9 +31,7 @@ case class DBRawQueryAction(requestName: Expression[String], query: Expression[S
                         next,
                         resolvedName,
                         Some("ERROR"),
-                        Some(e.getMessage))
-          },
-          _ => executeNext(session, startTime, ctx.coreComponents.clock.nowMillis, OK, next, resolvedName, None, None)
+                        Some(exception.getMessage))
         ))
       .onFailure(m =>
         requestName(session).map { rn =>

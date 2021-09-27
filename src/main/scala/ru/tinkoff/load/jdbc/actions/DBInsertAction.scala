@@ -32,24 +32,23 @@ case class DBInsertAction(
       startTime <- ctx.coreComponents.clock.nowMillis.success
 
     } yield
-      db.executeUpdate(implicit c => sql.executeInsert)
-        .fold(
-          e => {
-            println(s"ERROR: ${e.getMessage}")
+      dbClient
+        .executeUpdate(sql.sql, sql.params)(
+          _ => executeNext(session, startTime, ctx.coreComponents.clock.nowMillis, OK, next, rn, None, None),
+          e =>
             executeNext(session, startTime, ctx.coreComponents.clock.nowMillis, KO, next, rn, Some("ERROR"), Some(e.getMessage))
-          },
-          _ => executeNext(session, startTime, ctx.coreComponents.clock.nowMillis, OK, next, rn, None, None)
-        )).onFailure(m =>
-      requestName(session).map { rn =>
-        ctx.coreComponents.statsEngine.logCrash(session.scenario, session.groups, rn, m)
-        executeNext(session,
-                    ctx.coreComponents.clock.nowMillis,
-                    ctx.coreComponents.clock.nowMillis,
-                    KO,
-                    next,
-                    rn,
-                    Some("ERROR"),
-                    Some(m))
-    })
+        ))
+      .onFailure(m =>
+        requestName(session).map { rn =>
+          ctx.coreComponents.statsEngine.logCrash(session.scenario, session.groups, rn, m)
+          executeNext(session,
+                      ctx.coreComponents.clock.nowMillis,
+                      ctx.coreComponents.clock.nowMillis,
+                      KO,
+                      next,
+                      rn,
+                      Some("ERROR"),
+                      Some(m))
+      })
 
 }
