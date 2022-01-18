@@ -74,16 +74,15 @@ object statements {
       if (params.isEmpty)
         Future.successful(())
       else
-        interpolated.m.flatMap {
-          case (name, indexes) =>
-            params(name) match {
-              case IntParam(v)    => indexes.map(this.setInt(_, v))
-              case DoubleParam(v) => indexes.map(this.setDouble(_, v))
-              case StrParam(v)    => indexes.map(this.setString(_, v))
-              case LongParam(v)   => indexes.map(this.setLong(_, v))
-              case NullParam      => indexes.map(this.setObject(_, null))
-              case DateParam(v)   => indexes.map(this.setTimestamp(_, Timestamp.valueOf(v)))
-            }
+        interpolated.m.flatMap { case (name, indexes) =>
+          params(name) match {
+            case IntParam(v)    => indexes.map(this.setInt(_, v))
+            case DoubleParam(v) => indexes.map(this.setDouble(_, v))
+            case StrParam(v)    => indexes.map(this.setString(_, v))
+            case LongParam(v)   => indexes.map(this.setLong(_, v))
+            case NullParam      => indexes.map(this.setObject(_, null))
+            case DateParam(v)   => indexes.map(this.setTimestamp(_, Timestamp.valueOf(v)))
+          }
         }.reduce((f1, f2) => f1.flatMap(_ => f2))
     }
   }
@@ -109,16 +108,18 @@ object statements {
     override def registerOutParameter(index: Int, sqlType: Int): Future[Unit] =
       Future(stmt.registerOutParameter(index, sqlType))
 
-    override def setParams(interpolated: InterpolatorCtx,
-                           inParams: Map[String, ParamVal],
-                           outParams: Map[String, Int]): Future[Unit] = {
+    override def setParams(
+        interpolated: InterpolatorCtx,
+        inParams: Map[String, ParamVal],
+        outParams: Map[String, Int],
+    ): Future[Unit] = {
       if (inParams.isEmpty && outParams.isEmpty)
         Future.successful(())
       else
         interpolated.m.flatMap {
           case (name, indexes) if outParams.contains(name) =>
             indexes.map(this.registerOutParameter(_, outParams(name)))
-          case (name, indexes) =>
+          case (name, indexes)                             =>
             inParams(name) match {
               case IntParam(v)    => indexes.map(this.setInt(_, v))
               case DoubleParam(v) => indexes.map(this.setDouble(_, v))

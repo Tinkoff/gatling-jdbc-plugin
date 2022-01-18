@@ -30,7 +30,7 @@ package object db {
   }
 
   case class SqlWithParam(sql: String, params: Seq[(String, ParamVal)], outParams: Seq[(String, Int)] = Seq.empty) {
-    private val paramsMap = params.toMap
+    private val paramsMap                     = params.toMap
     private def paramValueToSql(name: String) =
       paramsMap.get(name) match {
         case Some(IntParam(v))    => s"$v"

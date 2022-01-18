@@ -9,7 +9,7 @@ package object actions {
   case class DBBaseAction(requestName: Expression[String]) {
     def insertInto(tableName: Expression[String], columns: Columns): DBInsertActionValuesStep =
       DBInsertActionValuesStep(requestName, tableName, columns)
-    def call(procedureName: Expression[String]): DBCallActionParamsStep = DBCallActionParamsStep(requestName, procedureName)
+    def call(procedureName: Expression[String]): DBCallActionParamsStep                       = DBCallActionParamsStep(requestName, procedureName)
 
     def rawSql(queryString: Expression[String]): RawSqlActionBuilder = RawSqlActionBuilder(requestName, queryString)
 
@@ -39,11 +39,12 @@ package object actions {
     def params(ps: (String, Expression[Any])*): QueryActionBuilder = QueryActionBuilder(requestName, sql, ps)
   }
 
-  case class QueryActionBuilder(requestName: Expression[String],
-                                sql: Expression[String],
-                                params: Seq[(String, Expression[Any])],
-                                checks: Seq[JdbcCheck] = Seq.empty)
-      extends ActionBuilder {
+  case class QueryActionBuilder(
+      requestName: Expression[String],
+      sql: Expression[String],
+      params: Seq[(String, Expression[Any])],
+      checks: Seq[JdbcCheck] = Seq.empty,
+  ) extends ActionBuilder {
     def check(newChecks: JdbcCheck*): QueryActionBuilder = this.copy(checks = newChecks)
 
     override def build(ctx: ScenarioContext, next: Action): Action = DBQueryAction(
@@ -52,7 +53,7 @@ package object actions {
       params,
       checks,
       next,
-      ctx
+      ctx,
     )
   }
 
@@ -66,11 +67,12 @@ package object actions {
     def params(ps: (String, Expression[Any])*): DBCallActionBuilder = DBCallActionBuilder(requestName, procedureName, ps)
   }
 
-  case class DBCallActionBuilder(requestName: Expression[String],
-                                 procedureName: Expression[String],
-                                 sessionParams: Seq[(String, Expression[Any])],
-                                 outParams: Seq[(String, Int)] = Seq.empty)
-      extends ActionBuilder {
+  case class DBCallActionBuilder(
+      requestName: Expression[String],
+      procedureName: Expression[String],
+      sessionParams: Seq[(String, Expression[Any])],
+      outParams: Seq[(String, Int)] = Seq.empty,
+  ) extends ActionBuilder {
     override def build(ctx: ScenarioContext, next: Action): Action =
       DBCallAction(requestName, procedureName, next, ctx, sessionParams, outParams)
 
@@ -82,25 +84,28 @@ package object actions {
       DBInsertActionBuilder(requestName, tableName, columns, values)
   }
 
-  case class DBInsertActionBuilder(requestName: Expression[String],
-                                   tableName: Expression[String],
-                                   columns: Columns,
-                                   sessionValues: Seq[(String, Expression[Any])] = Seq.empty)
-      extends ActionBuilder {
+  case class DBInsertActionBuilder(
+      requestName: Expression[String],
+      tableName: Expression[String],
+      columns: Columns,
+      sessionValues: Seq[(String, Expression[Any])] = Seq.empty,
+  ) extends ActionBuilder {
     override def build(ctx: ScenarioContext, next: Action): Action =
       DBInsertAction(requestName, tableName, columns.names, next, ctx, sessionValues)
   }
 
   sealed trait BatchAction
-  final case class BatchInsertAction(tableName: Expression[String],
-                                     columns: Columns,
-                                     sessionValues: Seq[(String, Expression[Any])])
-      extends BatchAction
+  final case class BatchInsertAction(
+      tableName: Expression[String],
+      columns: Columns,
+      sessionValues: Seq[(String, Expression[Any])],
+  ) extends BatchAction
 
-  final case class BatchUpdateAction(tableName: Expression[String],
-                                     updateValues: Seq[(String, Expression[Any])],
-                                     where: Option[Expression[String]] = None)
-      extends BatchAction
+  final case class BatchUpdateAction(
+      tableName: Expression[String],
+      updateValues: Seq[(String, Expression[Any])],
+      where: Option[Expression[String]] = None,
+  ) extends BatchAction
 
   final case class BatchActionBuilder(batchName: Expression[String], actions: Seq[BatchAction]) extends ActionBuilder {
     override def build(ctx: ScenarioContext, next: Action): Action = DBBatchAction(batchName, actions, next, ctx)

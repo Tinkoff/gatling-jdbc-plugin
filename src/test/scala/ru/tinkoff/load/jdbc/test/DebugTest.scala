@@ -7,7 +7,7 @@ import ru.tinkoff.load.jdbc.test.scenarios.BasicSimulation
 class DebugTest extends Simulation {
 
   setUp(
-    BasicSimulation().inject(atOnceUsers(1))
+    BasicSimulation().inject(atOnceUsers(1)),
   ).protocols(dataBase)
     .maxDuration(60)
 

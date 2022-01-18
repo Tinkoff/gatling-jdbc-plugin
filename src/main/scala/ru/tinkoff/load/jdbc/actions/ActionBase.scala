@@ -21,16 +21,18 @@ trait ActionBase {
       next: Action,
       requestName: String,
       responseCode: Option[String],
-      message: Option[String]
+      message: Option[String],
   ): Unit = {
-    ctx.coreComponents.statsEngine.logResponse(session.scenario,
-                                               session.groups,
-                                               requestName,
-                                               sent,
-                                               received,
-                                               status,
-                                               responseCode,
-                                               message)
+    ctx.coreComponents.statsEngine.logResponse(
+      session.scenario,
+      session.groups,
+      requestName,
+      sent,
+      received,
+      status,
+      responseCode,
+      message,
+    )
     next ! session.logGroupRequestTimings(sent, received)
   }
 }

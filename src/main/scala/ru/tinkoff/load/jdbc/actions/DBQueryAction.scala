@@ -18,15 +18,15 @@ case class DBQueryAction(
     params: Seq[(String, Expression[Any])],
     checks: Seq[JdbcCheck],
     next: Action,
-    ctx: ScenarioContext
+    ctx: ScenarioContext,
 ) extends ChainableAction with NameGen with ActionBase {
 
   override def name: String = genName("jdbcQueryAction")
 
   private def resolveParams(session: Session) =
     params
-      .foldLeft(Map[String, Any]().success) {
-        case (r, (k, v)) => r.flatMap(m => v(session).map(rv => m + (k -> rv)))
+      .foldLeft(Map[String, Any]().success) { case (r, (k, v)) =>
+        r.flatMap(m => v(session).map(rv => m + (k -> rv)))
       }
 
   override def execute(session: Session): Unit =
@@ -37,46 +37,52 @@ case class DBQueryAction(
       parametrisedSql <- SQL(resolvedQuery).withParamsMap(resolvedParams).success
       startTime       <- ctx.coreComponents.clock.nowMillis.success
 
-    } yield
-      dbClient
-        .executeSelect(parametrisedSql.sql, parametrisedSql.params)(
-          value => {
-            val received            = ctx.coreComponents.clock.nowMillis
-            val (newSession, error) = Check.check(value, session, checks.toList, new JHashMap[Any, Any]())
+    } yield dbClient
+      .executeSelect(parametrisedSql.sql, parametrisedSql.params)(
+        value => {
+          val received            = ctx.coreComponents.clock.nowMillis
+          val (newSession, error) = Check.check(value, session, checks.toList, new JHashMap[Any, Any]())
 
-            error match {
-              case Some(GFailure(errorMessage)) =>
-                executeNext(newSession.markAsFailed,
-                            startTime,
-                            received,
-                            KO,
-                            next,
-                            resolvedName,
-                            Some("Check ERROR"),
-                            Some(errorMessage))
-              case _ => executeNext(newSession, startTime, received, OK, next, resolvedName, None, None)
-            }
-          },
-          exception =>
-            executeNext(session,
-                        startTime,
-                        ctx.coreComponents.clock.nowMillis,
-                        KO,
-                        next,
-                        resolvedName,
-                        Some("ERROR"),
-                        Some(exception.getMessage))
-        ))
+          error match {
+            case Some(GFailure(errorMessage)) =>
+              executeNext(
+                newSession.markAsFailed,
+                startTime,
+                received,
+                KO,
+                next,
+                resolvedName,
+                Some("Check ERROR"),
+                Some(errorMessage),
+              )
+            case _                            => executeNext(newSession, startTime, received, OK, next, resolvedName, None, None)
+          }
+        },
+        exception =>
+          executeNext(
+            session,
+            startTime,
+            ctx.coreComponents.clock.nowMillis,
+            KO,
+            next,
+            resolvedName,
+            Some("ERROR"),
+            Some(exception.getMessage),
+          ),
+      ))
       .onFailure(m =>
         requestName(session).map { rn =>
           ctx.coreComponents.statsEngine.logCrash(session.scenario, session.groups, rn, m)
-          executeNext(session,
-                      ctx.coreComponents.clock.nowMillis,
-                      ctx.coreComponents.clock.nowMillis,
-                      KO,
-                      next,
-                      rn,
-                      Some("ERROR"),
-                      Some(m))
-      })
+          executeNext(
+            session,
+            ctx.coreComponents.clock.nowMillis,
+            ctx.coreComponents.clock.nowMillis,
+            KO,
+            next,
+            rn,
+            Some("ERROR"),
+            Some(m),
+          )
+        },
+      )
 }

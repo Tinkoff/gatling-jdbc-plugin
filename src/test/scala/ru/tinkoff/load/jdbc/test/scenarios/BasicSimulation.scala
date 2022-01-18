@@ -23,7 +23,7 @@ class BasicSimulation {
       feed(f)
         .exec(Actions.insertTest())
         .exec(Actions.callTest())
-        .exec(Actions.selectTest)
+        .exec(Actions.selectTest),
     )
     .exec(Actions.batchTest)
     .exec(Actions.selectAfterBatch)
