@@ -15,7 +15,7 @@ trait JdbcCheckSupport {
   val AllRecordPreparer: Preparer[AllRecordResult, AllRecordResult] = something => something.success
 
   implicit val AllRecordCheckMaterializer
-      : CheckMaterializer[JdbcAllRecordCheckType, JdbcCheck, AllRecordResult, AllRecordResult] =
+  : CheckMaterializer[JdbcAllRecordCheckType, JdbcCheck, AllRecordResult, AllRecordResult] =
     new CheckMaterializer[JdbcAllRecordCheckType, JdbcCheck, AllRecordResult, AllRecordResult](identity) {
       override protected def preparer: Preparer[AllRecordResult, AllRecordResult] = AllRecordPreparer
     }
@@ -29,24 +29,24 @@ trait JdbcCheckSupport {
       override def arity: String = "find"
     }.expressionSuccess
 
-  val AllRecordResults = new CheckBuilder[JdbcAllRecordCheckType, AllRecordResult, AllRecordResult](
+  val AllRecordResults = new CheckBuilder.Find.Default[JdbcAllRecordCheckType, AllRecordResult, AllRecordResult](
     AllRecordExtractor,
     displayActualValue = true,
   )
 
-  val allResults: CheckBuilder[JdbcAllRecordCheckType, AllRecordResult, AllRecordResult] = AllRecordResults
+  val allResults: CheckBuilder.Find.Default[JdbcAllRecordCheckType, AllRecordResult, AllRecordResult] = AllRecordResults
 
   val allRecordsCheck: JdbcAllRecordsCheck.type = JdbcAllRecordsCheck
 
   @implicitNotFound("Could not find a CheckMaterializer. This check might not be valid for JDBC.")
-  implicit def findCheckBuilder2JdbcCheck[A, P, X](findCheckBuilder: CheckBuilder[A, P, X])(implicit
-      CheckMaterializer: CheckMaterializer[A, JdbcCheck, AllRecordResult, P],
+  implicit def findCheckBuilder2JdbcCheck[A, P, X](findCheckBuilder: CheckBuilder.Find.Default[A, P, X])(implicit
+                                                                                                 CheckMaterializer: CheckMaterializer[A, JdbcCheck, AllRecordResult, P],
   ): JdbcCheck =
     findCheckBuilder.find.exists
 
   @implicitNotFound("Could not find a CheckMaterializer. This check might not be valid for JDBC.")
-  implicit def checkBuilder2JdbcCheck[A, P, X](checkBuilder: CheckBuilder[A, P, X])(implicit
-      materializer: CheckMaterializer[A, JdbcCheck, AllRecordResult, P],
+  implicit def checkBuilder2JdbcCheck[A, P, X](checkBuilder: CheckBuilder.Final.Default[A, P, X])(implicit
+                                                                                                  materializer: CheckMaterializer[A, JdbcCheck, AllRecordResult, P],
   ): JdbcCheck =
     checkBuilder.build(materializer)
 }
