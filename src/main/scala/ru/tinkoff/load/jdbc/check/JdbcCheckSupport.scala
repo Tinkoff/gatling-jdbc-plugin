@@ -1,7 +1,8 @@
 package ru.tinkoff.load.jdbc.check
 
 import io.gatling.commons.validation._
-import io.gatling.core.check.{CheckBuilder, CheckMaterializer, Extractor, Preparer}
+import io.gatling.core.check.Check.PreparedCache
+import io.gatling.core.check._
 import io.gatling.core.session.{Expression, _}
 import ru.tinkoff.load.jdbc.JdbcCheck
 
@@ -13,6 +14,17 @@ trait JdbcCheckSupport {
   type AllRecordResult = List[Map[String, Any]]
 
   val AllRecordPreparer: Preparer[AllRecordResult, AllRecordResult] = something => something.success
+
+  def simpleCheck(f: AllRecordResult => Boolean): JdbcCheck =
+    Check.Simple(
+      (response: AllRecordResult, _: Session, _: PreparedCache) =>
+        if (f(response)) {
+          CheckResult.NoopCheckResultSuccess
+        } else {
+          "Jdbc check failed".failure
+        },
+      None,
+    )
 
   @implicitNotFound("Could not find a CheckMaterializer. This check might not be valid for JDBC.")
   implicit def checkBuilder2JdbcCheck[T, P, X](checkBuilder: CheckBuilder[T, P])(implicit

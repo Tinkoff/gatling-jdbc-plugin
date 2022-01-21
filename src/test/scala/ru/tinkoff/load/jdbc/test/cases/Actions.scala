@@ -46,9 +46,7 @@ object Actions {
       .queryP("SELECT * FROM TEST_TABLE WHERE ID = {id}")
       .params("id" -> 1)
       .check(
-        allRecordsCheck { r =>
-          r.nonEmpty
-        },
+        simpleCheck(x => x.nonEmpty),
         allResults.saveAs("R"),
       )
 
