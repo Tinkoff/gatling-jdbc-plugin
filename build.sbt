@@ -1,8 +1,7 @@
 import Dependencies._
 
-enablePlugins(GatlingPlugin, GitVersioning)
-
 lazy val root = (project in file("."))
+  .enablePlugins(GitVersioning)
   .settings(
     name         := "gatling-jdbc-plugin",
     scalaVersion := "2.13.8",

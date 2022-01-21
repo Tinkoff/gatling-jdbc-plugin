@@ -20,7 +20,7 @@ object JDBCClient {
     )
     private val emptyCtx = InterpolatorCtx("", "", 0, inCurlyBraces = false, Map.empty)
 
-    private[this] def putToCtx(ctx: Map[String, List[Int]], name: String, number: Int) = {
+    private[this] def putToCtx(ctx: Map[String, List[Int]], name: String, number: Int): Map[String, List[Int]] = {
       val numbers = ctx.getOrElse(name, List.empty[Int])
       ctx ++ Map((name, number :: numbers))
     }
@@ -44,7 +44,7 @@ class JDBCClient(pool: HikariDataSource, blockingPool: ExecutorService) {
   private def connectionResource: ResourceFut[ConnectionWrapper[Future]] =
     ResourceFut.make(Future(ConnectionWrapper.Impl(pool.getConnection, ec)))(_.close)
 
-  private def statementForBatchResource =
+  private def statementForBatchResource: ResourceFut[StatementWrapper[Future]] =
     for {
       conn       <- connectionResource
       autoCommit <- ResourceFut.liftFuture(conn.getAutoCommit)
@@ -59,13 +59,16 @@ class JDBCClient(pool: HikariDataSource, blockingPool: ExecutorService) {
 
     } yield stmt
 
-  private def statementResource =
+  private def statementResource: ResourceFut[StatementWrapper[Future]] =
     for {
       conn <- connectionResource
       stmt <- ResourceFut.make(conn.createStatement.map(statement(_, ec)))(_.close)
     } yield stmt
 
-  private def preparedStatementResource(sql: String, params: Map[String, ParamVal]) =
+  private def preparedStatementResource(
+      sql: String,
+      params: Map[String, ParamVal],
+  ): ResourceFut[PreparedStatementWrapper[Future]] =
     for {
       conn            <- connectionResource
       interpolatedCtx <- ResourceFut.liftFuture(Future(Interpolator.interpolate(sql)))
@@ -77,7 +80,11 @@ class JDBCClient(pool: HikariDataSource, blockingPool: ExecutorService) {
       _               <- ResourceFut.liftFuture(stmt.setParams(interpolatedCtx, params))
     } yield stmt
 
-  private def callableStatementResource(sql: String, inParams: Map[String, ParamVal], outParams: Map[String, Int]) =
+  private def callableStatementResource(
+      sql: String,
+      inParams: Map[String, ParamVal],
+      outParams: Map[String, Int],
+  ): ResourceFut[CallableStatementWrapper[Future]] =
     for {
       conn            <- connectionResource
       interpolatedCtx <- ResourceFut.liftFuture(Future(Interpolator.interpolate(sql)))

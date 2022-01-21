@@ -22,7 +22,7 @@ final case class DBBatchAction(
 
   override def name: String = genName("jdbcBatchAction")
 
-  private def resolveParams(session: Session, values: Seq[(String, Expression[Any])]) =
+  private def resolveParams(session: Session, values: Seq[(String, Expression[Any])]): Validation[Map[String, Any]] =
     values.traverse { case (k, v) => v(session).map((k, _)) }.map(_.toMap)
 
   private def resolveBatchAction(session: Session): PartialFunction[BatchAction, Validation[SqlWithParam]] = {
