@@ -25,12 +25,14 @@ case class JdbcProtocolBuilderPasswordStep(url: String, username: String) {
 
 }
 
-final case class JdbcProtocolBuilderConnectionSettingsStep(url: String,
-                                                           username: String,
-                                                           password: String,
-                                                           maximumPoolSize: Int = 10,
-                                                           minimumIdleConnections: Int = 10,
-                                                           connectionTimeout: FiniteDuration = 1.minute) {
+final case class JdbcProtocolBuilderConnectionSettingsStep(
+    url: String,
+    username: String,
+    password: String,
+    maximumPoolSize: Int = 10,
+    minimumIdleConnections: Int = 10,
+    connectionTimeout: FiniteDuration = 1.minute,
+) {
   def protocolBuilder: JdbcProtocolBuilder = {
     val hikariConfig = new HikariConfig()
 
@@ -44,9 +46,9 @@ final case class JdbcProtocolBuilderConnectionSettingsStep(url: String,
     JdbcProtocolBuilder(hikariConfig)
   }
 
-  def maximumPoolSize(newValue: Int): JdbcProtocolBuilderConnectionSettingsStep =
+  def maximumPoolSize(newValue: Int): JdbcProtocolBuilderConnectionSettingsStep              =
     this.copy(maximumPoolSize = newValue)
-  def minimumIdleConnections(newValue: Int): JdbcProtocolBuilderConnectionSettingsStep =
+  def minimumIdleConnections(newValue: Int): JdbcProtocolBuilderConnectionSettingsStep       =
     this.copy(minimumIdleConnections = newValue)
   def connectionTimeout(newValue: FiniteDuration): JdbcProtocolBuilderConnectionSettingsStep =
     this.copy(connectionTimeout = newValue)

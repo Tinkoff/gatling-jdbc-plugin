@@ -36,7 +36,7 @@ object Actions {
     insertInto("TEST_TABLE", Columns("ID", "NAME")).values("ID" -> 20, "NAME" -> "Test 12"),
     insertInto("TEST_TABLE", Columns("ID", "NAME")).values("ID" -> 40, "NAME" -> "Test 34"),
     insertInto("TEST_TABLE", Columns("ID", "NAME", "CREATED_AT"))
-      .values("ID" -> 30, "NAME" -> "Test  ${i}", "CREATED_AT" -> LocalDateTime.now().minusMonths(6)),
+      .values("ID"                                              -> 30, "NAME" -> "Test  ${i}", "CREATED_AT" -> LocalDateTime.now().minusMonths(6)),
     update("TEST_TABLE").set("NAME" -> "TEST 5").where("ID = 2"),
 //    update("TEST_TABLE").set("NAME" -> "bird").all
   )
@@ -46,17 +46,15 @@ object Actions {
       .queryP("SELECT * FROM TEST_TABLE WHERE ID = {id}")
       .params("id" -> 1)
       .check(
-        allRecordsCheck { r =>
-          r.nonEmpty
-        },
-        allResults.saveAs("R")
+        simpleCheck(x => x.nonEmpty),
+        allResults.saveAs("R"),
       )
 
   def selectAfterBatch: actions.QueryActionBuilder =
     jdbc("SELECT SOME")
       .query("SELECT * FROM TEST_TABLE")
       .check(
-        allResults.saveAs("RR")
+        allResults.saveAs("RR"),
       )
 
 }

@@ -12,11 +12,11 @@ object ResourceFut {
     new ResourceFut[R] {
       override def use[U](f: R => Future[U]): Future[U] =
         for {
-          res <- acquire
+          res    <- acquire
           result <- f(res).transformWith {
-                     case Success(value)     => release(res).map(_ => value)
-                     case Failure(exception) => release(res).flatMap(_ => Future.failed[U](exception))
-                   }
+                      case Success(value)     => release(res).map(_ => value)
+                      case Failure(exception) => release(res).flatMap(_ => Future.failed[U](exception))
+                    }
 
         } yield result
     }

@@ -14,41 +14,43 @@ case class DBInsertAction(
     columns: Seq[String],
     next: Action,
     ctx: ScenarioContext,
-    sessionValues: Seq[(String, Expression[Any])]
+    sessionValues: Seq[(String, Expression[Any])],
 ) extends ChainableAction with NameGen with ActionBase {
   override def name: String = genName("jdbcInsertAction")
 
   override def execute(session: Session): Unit =
     (for {
-      rn    <- requestName(session)
-      tName <- tableName(session)
-      iParams <- sessionValues
-                  .foldLeft(Map[String, Any]().success) {
-                    case (r, (k, v)) => r.flatMap(m => v(session).map(rv => m + (k -> rv)))
-                  }
-      sql <- SQL(s"INSERT INTO $tName (${columns.mkString(",")}) VALUES(${columns.map(s => s"{$s}").mkString(",")})")
-              .withParamsMap(iParams)
-              .success
+      rn        <- requestName(session)
+      tName     <- tableName(session)
+      iParams   <- sessionValues
+                     .foldLeft(Map[String, Any]().success) { case (r, (k, v)) =>
+                       r.flatMap(m => v(session).map(rv => m + (k -> rv)))
+                     }
+      sql       <- SQL(s"INSERT INTO $tName (${columns.mkString(",")}) VALUES(${columns.map(s => s"{$s}").mkString(",")})")
+                     .withParamsMap(iParams)
+                     .success
       startTime <- ctx.coreComponents.clock.nowMillis.success
 
-    } yield
-      dbClient
-        .executeUpdate(sql.sql, sql.params)(
-          _ => executeNext(session, startTime, ctx.coreComponents.clock.nowMillis, OK, next, rn, None, None),
-          e =>
-            executeNext(session, startTime, ctx.coreComponents.clock.nowMillis, KO, next, rn, Some("ERROR"), Some(e.getMessage))
-        ))
+    } yield dbClient
+      .executeUpdate(sql.sql, sql.params)(
+        _ => executeNext(session, startTime, ctx.coreComponents.clock.nowMillis, OK, next, rn, None, None),
+        e =>
+          executeNext(session, startTime, ctx.coreComponents.clock.nowMillis, KO, next, rn, Some("ERROR"), Some(e.getMessage)),
+      ))
       .onFailure(m =>
         requestName(session).map { rn =>
           ctx.coreComponents.statsEngine.logCrash(session.scenario, session.groups, rn, m)
-          executeNext(session,
-                      ctx.coreComponents.clock.nowMillis,
-                      ctx.coreComponents.clock.nowMillis,
-                      KO,
-                      next,
-                      rn,
-                      Some("ERROR"),
-                      Some(m))
-      })
+          executeNext(
+            session,
+            ctx.coreComponents.clock.nowMillis,
+            ctx.coreComponents.clock.nowMillis,
+            KO,
+            next,
+            rn,
+            Some("ERROR"),
+            Some(m),
+          )
+        },
+      )
 
 }

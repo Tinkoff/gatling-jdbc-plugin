@@ -11,21 +11,23 @@ import scala.util.{Failure, Success}
 object JDBCClient {
   object Interpolator {
     type ParamToIndexesMap = Map[String, List[Int]]
-    case class InterpolatorCtx(queryString: String,
-                               paramName: String,
-                               paramIndex: Int,
-                               inCurlyBraces: Boolean,
-                               m: ParamToIndexesMap)
+    case class InterpolatorCtx(
+        queryString: String,
+        paramName: String,
+        paramIndex: Int,
+        inCurlyBraces: Boolean,
+        m: ParamToIndexesMap,
+    )
     private val emptyCtx = InterpolatorCtx("", "", 0, inCurlyBraces = false, Map.empty)
 
-    private[this] def putToCtx(ctx: Map[String, List[Int]], name: String, number: Int) = {
+    private[this] def putToCtx(ctx: Map[String, List[Int]], name: String, number: Int): Map[String, List[Int]] = {
       val numbers = ctx.getOrElse(name, List.empty[Int])
       ctx ++ Map((name, number :: numbers))
     }
 
     def interpolate(sql: String): InterpolatorCtx = sql.foldLeft(emptyCtx) {
-      case (ic @ InterpolatorCtx(_, _, _, false, _), '{') => ic.copy(inCurlyBraces = true)
-      case (InterpolatorCtx(r, curName, n, true, ctx), '}') =>
+      case (ic @ InterpolatorCtx(_, _, _, false, _), '{')    => ic.copy(inCurlyBraces = true)
+      case (InterpolatorCtx(r, curName, n, true, ctx), '}')  =>
         InterpolatorCtx(s"$r ?", "", n + 1, inCurlyBraces = false, putToCtx(ctx, curName, n + 1))
       case (ic @ InterpolatorCtx(_, curName, _, true, _), c) => ic.copy(paramName = s"$curName$c")
 
@@ -42,48 +44,56 @@ class JDBCClient(pool: HikariDataSource, blockingPool: ExecutorService) {
   private def connectionResource: ResourceFut[ConnectionWrapper[Future]] =
     ResourceFut.make(Future(ConnectionWrapper.Impl(pool.getConnection, ec)))(_.close)
 
-  private def statementForBatchResource =
+  private def statementForBatchResource: ResourceFut[StatementWrapper[Future]] =
     for {
       conn       <- connectionResource
       autoCommit <- ResourceFut.liftFuture(conn.getAutoCommit)
       _          <- ResourceFut.liftFuture(conn.setAutoCommit(false))
-      stmt <- ResourceFut.make(conn.createStatement.map(statement(_, ec)))(s =>
-               for {
-                 _ <- conn.commit
-                 _ <- conn.setAutoCommit(autoCommit)
-                 _ <- s.close
-               } yield ())
+      stmt       <- ResourceFut.make(conn.createStatement.map(statement(_, ec)))(s =>
+                      for {
+                        _ <- conn.commit
+                        _ <- conn.setAutoCommit(autoCommit)
+                        _ <- s.close
+                      } yield (),
+                    )
 
     } yield stmt
 
-  private def statementResource =
+  private def statementResource: ResourceFut[StatementWrapper[Future]] =
     for {
       conn <- connectionResource
       stmt <- ResourceFut.make(conn.createStatement.map(statement(_, ec)))(_.close)
     } yield stmt
 
-  private def preparedStatementResource(sql: String, params: Map[String, ParamVal]) =
+  private def preparedStatementResource(
+      sql: String,
+      params: Map[String, ParamVal],
+  ): ResourceFut[PreparedStatementWrapper[Future]] =
     for {
       conn            <- connectionResource
       interpolatedCtx <- ResourceFut.liftFuture(Future(Interpolator.interpolate(sql)))
-      stmt <- ResourceFut.make(
-               conn
-                 .prepareStatement(interpolatedCtx.queryString)
-                 .map(preparedStatement(_, ec))
-             )(_.close)
-      _ <- ResourceFut.liftFuture(stmt.setParams(interpolatedCtx, params))
+      stmt            <- ResourceFut.make(
+                           conn
+                             .prepareStatement(interpolatedCtx.queryString)
+                             .map(preparedStatement(_, ec)),
+                         )(_.close)
+      _               <- ResourceFut.liftFuture(stmt.setParams(interpolatedCtx, params))
     } yield stmt
 
-  private def callableStatementResource(sql: String, inParams: Map[String, ParamVal], outParams: Map[String, Int]) =
+  private def callableStatementResource(
+      sql: String,
+      inParams: Map[String, ParamVal],
+      outParams: Map[String, Int],
+  ): ResourceFut[CallableStatementWrapper[Future]] =
     for {
       conn            <- connectionResource
       interpolatedCtx <- ResourceFut.liftFuture(Future(Interpolator.interpolate(sql)))
-      stmt <- ResourceFut.make(
-               conn
-                 .prepareCall(s"{${interpolatedCtx.queryString}}")
-                 .map(callableStatement(_, ec))
-             )(_.close)
-      _ <- ResourceFut.liftFuture(stmt.setParams(interpolatedCtx, inParams, outParams))
+      stmt            <- ResourceFut.make(
+                           conn
+                             .prepareCall(s"{${interpolatedCtx.queryString}}")
+                             .map(callableStatement(_, ec)),
+                         )(_.close)
+      _               <- ResourceFut.liftFuture(stmt.setParams(interpolatedCtx, inParams, outParams))
     } yield stmt
 
   private def withCompletion[T, U](fut: Future[T])(s: T => U, f: Throwable => U): Unit = fut.onComplete {
@@ -100,23 +110,27 @@ class JDBCClient(pool: HikariDataSource, blockingPool: ExecutorService) {
   def executeUpdate[U](sqlQuery: String, params: Seq[(String, ParamVal)])(s: Int => U, f: Throwable => U): Unit =
     withCompletion(preparedStatementResource(sqlQuery, params.toMap).use(_.executeUpdate))(s, f)
 
-  def call[U](sqlCall: String, params: Seq[(String, ParamVal)], outParams: Seq[(String, Int)])(s: Int => U,
-                                                                                               f: Throwable => U): Unit =
+  def call[U](sqlCall: String, params: Seq[(String, ParamVal)], outParams: Seq[(String, Int)])(
+      s: Int => U,
+      f: Throwable => U,
+  ): Unit =
     withCompletion(callableStatementResource(sqlCall, params.toMap, outParams.toMap).use(_.executeUpdate))(s, f)
 
   def batch[U](queries: Seq[SqlWithParam], batchSize: Int = 1000)(s: Array[Int] => U, f: Throwable => U): Unit =
     withCompletion(
-      statementForBatchResource.use(
-        stmt =>
-          queries
-            .map(_.substituteParams)
-            .grouped(batchSize)
-            .map(batch =>
-              batch
-                .map(query => stmt.addBatch(query))
-                .reduce((f1, f2) => f1.flatMap(_ => f2))
-                .flatMap(_ => stmt.executeBatch))
-            .reduce((f1, f2) => f1.flatMap(a1 => f2.map(a2 => a1 ++ a2)))))(s, f)
+      statementForBatchResource.use(stmt =>
+        queries
+          .map(_.substituteParams)
+          .grouped(batchSize)
+          .map(batch =>
+            batch
+              .map(query => stmt.addBatch(query))
+              .reduce((f1, f2) => f1.flatMap(_ => f2))
+              .flatMap(_ => stmt.executeBatch),
+          )
+          .reduce((f1, f2) => f1.flatMap(a1 => f2.map(a2 => a1 ++ a2))),
+      ),
+    )(s, f)
 
   def close(): Unit = {
     pool.close()

@@ -1,23 +1,25 @@
 package ru.tinkoff.load.jdbc.check
 
-import java.util.{Map => JMap}
-
 import io.gatling.commons.validation._
 import io.gatling.core.check.CheckResult
-import io.gatling.core.session.Session
+import io.gatling.core.session.{Expression, Session}
 import ru.tinkoff.load.jdbc.JdbcCheck
 
-object JdbcAllRecordsCheck {
-  private val JdbcAnyCheckFailure = "Jdbc check failed".failure
-}
+import java.util.{Map => JMap}
 
-case class JdbcAllRecordsCheck(pred: List[Map[String, Any]] => Boolean) extends JdbcCheck {
-  override def check(response: List[Map[String, Any]],
-                     session: Session,
-                     preparedCache: JMap[Any, Any]): Validation[CheckResult] =
-    if (pred(response)) {
-      CheckResult.NoopCheckResultSuccess
-    } else {
-      JdbcAllRecordsCheck.JdbcAnyCheckFailure
-    }
+case class JdbcAllRecordsCheck(wrapped: JdbcCheck) extends JdbcCheck {
+
+  override def check(
+      response: List[Map[String, Any]],
+      session: Session,
+      preparedCache: JMap[Any, Any],
+  ): Validation[CheckResult] = wrapped.check(response, session, preparedCache)
+
+  override def checkIf(condition: Expression[Boolean]): JdbcCheck = copy(
+    wrapped.checkIf(condition),
+  )
+
+  override def checkIf(condition: (List[Map[String, Any]], Session) => Validation[Boolean]): JdbcCheck = copy(
+    wrapped.checkIf(condition),
+  )
 }

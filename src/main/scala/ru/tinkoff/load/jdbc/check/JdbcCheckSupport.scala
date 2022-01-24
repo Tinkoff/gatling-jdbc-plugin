@@ -1,7 +1,8 @@
 package ru.tinkoff.load.jdbc.check
 
 import io.gatling.commons.validation._
-import io.gatling.core.check.{CheckBuilder, CheckMaterializer, DefaultFindCheckBuilder, Extractor, FindCheckBuilder, Preparer}
+import io.gatling.core.check.Check.PreparedCache
+import io.gatling.core.check._
 import io.gatling.core.session.{Expression, _}
 import ru.tinkoff.load.jdbc.JdbcCheck
 
@@ -14,8 +15,31 @@ trait JdbcCheckSupport {
 
   val AllRecordPreparer: Preparer[AllRecordResult, AllRecordResult] = something => something.success
 
+  def simpleCheck(f: AllRecordResult => Boolean): JdbcCheck =
+    Check.Simple(
+      (response: AllRecordResult, _: Session, _: PreparedCache) =>
+        if (f(response)) {
+          CheckResult.NoopCheckResultSuccess
+        } else {
+          "Jdbc check failed".failure
+        },
+      None,
+    )
+
+  @implicitNotFound("Could not find a CheckMaterializer. This check might not be valid for JDBC.")
+  implicit def checkBuilder2JdbcCheck[T, P, X](checkBuilder: CheckBuilder[T, P])(implicit
+      materializer: CheckMaterializer[T, JdbcCheck, AllRecordResult, P],
+  ): JdbcCheck =
+    checkBuilder.build(materializer)
+
+  @implicitNotFound("Could not find a CheckMaterializer. This check might not be valid for JDBC.")
+  implicit def findCheckBuilder2JdbcCheck[T, P, X](find: CheckBuilder.Find[T, P, X])(implicit
+      CheckMaterializer: CheckMaterializer[T, JdbcCheck, AllRecordResult, P],
+  ): JdbcCheck =
+    find.find.exists
+
   implicit val AllRecordCheckMaterializer
-    : CheckMaterializer[JdbcAllRecordCheckType, JdbcCheck, AllRecordResult, AllRecordResult] =
+      : CheckMaterializer[JdbcAllRecordCheckType, JdbcCheck, AllRecordResult, AllRecordResult] =
     new CheckMaterializer[JdbcAllRecordCheckType, JdbcCheck, AllRecordResult, AllRecordResult](identity) {
       override protected def preparer: Preparer[AllRecordResult, AllRecordResult] = AllRecordPreparer
     }
@@ -29,22 +53,13 @@ trait JdbcCheckSupport {
       override def arity: String = "find"
     }.expressionSuccess
 
-  val AllRecordResults = new DefaultFindCheckBuilder[JdbcAllRecordCheckType, AllRecordResult, AllRecordResult](
+  val AllRecordResults = new CheckBuilder.Find.Default[JdbcAllRecordCheckType, AllRecordResult, AllRecordResult](
     AllRecordExtractor,
-    displayActualValue = true
+    displayActualValue = true,
   )
 
-  val allResults: DefaultFindCheckBuilder[JdbcAllRecordCheckType, AllRecordResult, AllRecordResult] = AllRecordResults
+  val allResults: CheckBuilder.Find.Default[JdbcAllRecordCheckType, AllRecordResult, AllRecordResult] = AllRecordResults
 
   val allRecordsCheck: JdbcAllRecordsCheck.type = JdbcAllRecordsCheck
 
-  @implicitNotFound("Could not find a CheckMaterializer. This check might not be valid for JDBC.")
-  implicit def findCheckBuilder2JdbcCheck[A, P, X](findCheckBuilder: FindCheckBuilder[A, P, X])(
-      implicit CheckMaterializer: CheckMaterializer[A, JdbcCheck, AllRecordResult, P]): JdbcCheck =
-    findCheckBuilder.find.exists
-
-  @implicitNotFound("Could not find a CheckMaterializer. This check might not be valid for JDBC.")
-  implicit def checkBuilder2JdbcCheck[A, P, X](checkBuilder: CheckBuilder[A, P, X])(
-      implicit materializer: CheckMaterializer[A, JdbcCheck, AllRecordResult, P]): JdbcCheck =
-    checkBuilder.build(materializer)
 }

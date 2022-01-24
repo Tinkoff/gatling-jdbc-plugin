@@ -19,30 +19,34 @@ case class DBRawQueryAction(requestName: Expression[String], query: Expression[S
       sql           <- SQL(resolvedQuery).success
       startTime     <- ctx.coreComponents.clock.nowMillis.success
 
-    } yield
-      dbClient
-        .executeRaw(sql.q)(
-          _ => executeNext(session, startTime, ctx.coreComponents.clock.nowMillis, OK, next, resolvedName, None, None),
-          exception =>
-            executeNext(session,
-                        startTime,
-                        ctx.coreComponents.clock.nowMillis,
-                        KO,
-                        next,
-                        resolvedName,
-                        Some("ERROR"),
-                        Some(exception.getMessage))
-        ))
+    } yield dbClient
+      .executeRaw(sql.q)(
+        _ => executeNext(session, startTime, ctx.coreComponents.clock.nowMillis, OK, next, resolvedName, None, None),
+        exception =>
+          executeNext(
+            session,
+            startTime,
+            ctx.coreComponents.clock.nowMillis,
+            KO,
+            next,
+            resolvedName,
+            Some("ERROR"),
+            Some(exception.getMessage),
+          ),
+      ))
       .onFailure(m =>
         requestName(session).map { rn =>
           ctx.coreComponents.statsEngine.logCrash(session.scenario, session.groups, rn, m)
-          executeNext(session,
-                      ctx.coreComponents.clock.nowMillis,
-                      ctx.coreComponents.clock.nowMillis,
-                      KO,
-                      next,
-                      rn,
-                      Some("ERROR"),
-                      Some(m))
-      })
+          executeNext(
+            session,
+            ctx.coreComponents.clock.nowMillis,
+            ctx.coreComponents.clock.nowMillis,
+            KO,
+            next,
+            rn,
+            Some("ERROR"),
+            Some(m),
+          )
+        },
+      )
 }
