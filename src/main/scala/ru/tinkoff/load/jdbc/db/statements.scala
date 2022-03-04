@@ -23,6 +23,7 @@ object statements {
     def setString(index: Int, value: String): F[Unit]
     def setLong(index: Int, value: Long): F[Unit]
     def setObject(index: Int, value: Object): F[Unit]
+    def setBoolean(index: Int, value: Boolean): F[Unit]
     def setTimestamp(index: Int, value: java.sql.Timestamp): F[Unit]
     def setParams(interpolated: InterpolatorCtx, params: Map[String, ParamVal]): F[Unit]
   }
@@ -34,6 +35,7 @@ object statements {
     def setDouble(index: Int, value: Double): F[Unit]
     def setString(index: Int, value: String): F[Unit]
     def setLong(index: Int, value: Long): F[Unit]
+    def setBoolean(index: Int, value: Boolean): F[Unit]
     def setObject(index: Int, value: Object): F[Unit]
     def setTimestamp(index: Int, value: java.sql.Timestamp): F[Unit]
     def registerOutParameter(index: Int, sqlType: Int): F[Unit]
@@ -70,18 +72,22 @@ object statements {
 
     override def setInt(index: Int, value: Int): Future[Unit] = Future(stmt.setInt(index, value))
 
+    override def setBoolean(index: Int, value: Boolean): Future[Unit] = Future(stmt.setBoolean(index, value))
+
     override def setParams(interpolated: InterpolatorCtx, params: Map[String, ParamVal]): Future[Unit] = {
       if (params.isEmpty)
         Future.successful(())
       else
         interpolated.m.flatMap { case (name, indexes) =>
           params(name) match {
-            case IntParam(v)    => indexes.map(this.setInt(_, v))
-            case DoubleParam(v) => indexes.map(this.setDouble(_, v))
-            case StrParam(v)    => indexes.map(this.setString(_, v))
-            case LongParam(v)   => indexes.map(this.setLong(_, v))
-            case NullParam      => indexes.map(this.setObject(_, null))
-            case DateParam(v)   => indexes.map(this.setTimestamp(_, Timestamp.valueOf(v)))
+            case IntParam(v)     => indexes.map(this.setInt(_, v))
+            case DoubleParam(v)  => indexes.map(this.setDouble(_, v))
+            case StrParam(v)     => indexes.map(this.setString(_, v))
+            case LongParam(v)    => indexes.map(this.setLong(_, v))
+            case NullParam       => indexes.map(this.setObject(_, null))
+            case DateParam(v)    => indexes.map(this.setTimestamp(_, Timestamp.valueOf(v)))
+            case BooleanParam(v) => indexes.map(this.setBoolean(_, v))
+            case UUIDParam(v)    => indexes.map(this.setString(_, v.toString))
           }
         }.reduce((f1, f2) => f1.flatMap(_ => f2))
     }
@@ -121,15 +127,19 @@ object statements {
             indexes.map(this.registerOutParameter(_, outParams(name)))
           case (name, indexes)                             =>
             inParams(name) match {
-              case IntParam(v)    => indexes.map(this.setInt(_, v))
-              case DoubleParam(v) => indexes.map(this.setDouble(_, v))
-              case StrParam(v)    => indexes.map(this.setString(_, v))
-              case LongParam(v)   => indexes.map(this.setLong(_, v))
-              case NullParam      => indexes.map(this.setObject(_, null))
-              case DateParam(v)   => indexes.map(this.setTimestamp(_, Timestamp.valueOf(v)))
+              case IntParam(v)     => indexes.map(this.setInt(_, v))
+              case DoubleParam(v)  => indexes.map(this.setDouble(_, v))
+              case StrParam(v)     => indexes.map(this.setString(_, v))
+              case LongParam(v)    => indexes.map(this.setLong(_, v))
+              case NullParam       => indexes.map(this.setObject(_, null))
+              case DateParam(v)    => indexes.map(this.setTimestamp(_, Timestamp.valueOf(v)))
+              case UUIDParam(v)    => indexes.map(this.setObject(_, v))
+              case BooleanParam(v) => indexes.map(this.setBoolean(_, v))
             }
         }.reduce((f1, f2) => f1.flatMap(_ => f2))
     }
+
+    override def setBoolean(index: Int, value: Boolean): Future[Unit] = Future(stmt.setBoolean(index, value))
   }
 
   def statement(statement: Statement, ec: ExecutionContext): StatementWrapper[Future] = new StatementWrapperImpl(statement)(ec)
