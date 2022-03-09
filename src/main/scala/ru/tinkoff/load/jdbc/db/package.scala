@@ -2,6 +2,7 @@ package ru.tinkoff.load.jdbc
 
 import java.sql.ResultSet
 import java.time.LocalDateTime
+import java.util.UUID
 
 package object db {
 
@@ -13,6 +14,8 @@ package object db {
   case class DoubleParam(v: Double)      extends ParamVal
   case class StrParam(v: String)         extends ParamVal
   case class DateParam(v: LocalDateTime) extends ParamVal
+  case class BooleanParam(v: Boolean)    extends ParamVal
+  case class UUIDParam(v: UUID)          extends ParamVal
 
   case class SQL(q: String) {
     def withParams(params: (String, ParamVal)*): SqlWithParam = SqlWithParam(q, params)
@@ -25,6 +28,8 @@ package object db {
         case (k, "NULL")           => (k, NullParam)
         case (k, v: String)        => (k, StrParam(v))
         case (k, v: LocalDateTime) => (k, DateParam(v))
+        case (k, v: Boolean)       => (k, BooleanParam(v))
+        case (k, v: UUID)          => (k, UUIDParam(v))
         case (k, v)                => (k, StrParam(v.toString))
       }.toSeq: _*)
   }
@@ -33,13 +38,15 @@ package object db {
     private val paramsMap                     = params.toMap
     private def paramValueToSql(name: String) =
       paramsMap.get(name) match {
-        case Some(IntParam(v))    => s"$v"
-        case Some(DoubleParam(v)) => s"$v"
-        case Some(StrParam(v))    => s"'$v'"
-        case Some(LongParam(v))   => s"$v"
-        case Some(NullParam)      => "NULL"
-        case Some(DateParam(v))   => s"CAST('$v' AS TIMESTAMP)"
-        case None                 => ""
+        case Some(IntParam(v))     => s"$v"
+        case Some(DoubleParam(v))  => s"$v"
+        case Some(StrParam(v))     => s"'$v'"
+        case Some(LongParam(v))    => s"$v"
+        case Some(NullParam)       => "NULL"
+        case Some(DateParam(v))    => s"CAST('$v' AS TIMESTAMP)"
+        case Some(UUIDParam(v))    => s"CAST('$v' AS UUID)"
+        case Some(BooleanParam(v)) => s"$v"
+        case None                  => ""
       }
 
     def substituteParams: String = {

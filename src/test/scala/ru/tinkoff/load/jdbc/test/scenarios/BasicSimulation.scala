@@ -26,8 +26,10 @@ class BasicSimulation {
         .exec(Actions.selectTest),
     )
     .exec(Actions.batchTest)
+    .exec(Actions.selectTT)
     .exec(Actions.selectAfterBatch)
     .exec { s =>
+      println(s("ttr").as[List[Map[String, Any]]])
       println(s("R").as[List[Map[String, Any]]])
       println(s("RR").as[List[Map[String, Any]]])
       s
