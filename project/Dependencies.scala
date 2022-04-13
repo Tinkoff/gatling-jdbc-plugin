@@ -10,6 +10,6 @@ object Dependencies {
   )
 
   lazy val hikari = "com.zaxxer"     % "HikariCP" % "5.0.1"
-  lazy val h2jdbc = "com.h2database" % "h2"       % "2.1.210" % Test
+  lazy val h2jdbc = "com.h2database" % "h2"       % "2.1.212" % Test
 
 }
