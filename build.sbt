@@ -4,7 +4,7 @@ lazy val root = (project in file("."))
   .enablePlugins(GitVersioning)
   .settings(
     name         := "gatling-jdbc-plugin",
-    scalaVersion := "2.13.8",
+    scalaVersion := "2.13.10",
     libraryDependencies ++= gatling,
     libraryDependencies ++= Seq(hikari, h2jdbc),
     scalacOptions ++= Seq(
