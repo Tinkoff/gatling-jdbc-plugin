@@ -1,13 +1,13 @@
 ThisBuild / organization := "ru.tinkoff"
 
-ThisBuild / scmInfo     := Some(
+ThisBuild / scmInfo := Some(
   ScmInfo(
     url("https://github.com/TinkoffCreditSystems/gatling-jdbc-plugin"),
     "git@github.com:TinkoffCreditSystems/gatling-jdbc-plugin.git",
   ),
 )
 
-ThisBuild / developers  := List(
+ThisBuild / developers := List(
   Developer(
     id = "red-bashmak",
     name = "Vyacheslav Kalyokin",
