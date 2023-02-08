@@ -90,7 +90,7 @@ class JDBCClient(pool: HikariDataSource, blockingPool: ExecutorService) {
       interpolatedCtx <- ResourceFut.liftFuture(Future(Interpolator.interpolate(sql)))
       stmt            <- ResourceFut.make(
                            conn
-                             .prepareCall(s"{${interpolatedCtx.queryString}}")
+                             .prepareCall(s"${interpolatedCtx.queryString}")
                              .map(callableStatement(_, ec)),
                          )(_.close)
       _               <- ResourceFut.liftFuture(stmt.setParams(interpolatedCtx, inParams, outParams))

@@ -6,6 +6,7 @@ import io.gatling.core.action.{Action, ChainableAction}
 import io.gatling.core.session.{Expression, Session}
 import io.gatling.core.structure.ScenarioContext
 import io.gatling.core.util.NameGen
+import ru.tinkoff.load.jdbc.actions.actions.{BatchAction, BatchInsertAction, BatchUpdateAction}
 import ru.tinkoff.load.jdbc.db.{SQL, SqlWithParam}
 
 final case class DBBatchAction(
