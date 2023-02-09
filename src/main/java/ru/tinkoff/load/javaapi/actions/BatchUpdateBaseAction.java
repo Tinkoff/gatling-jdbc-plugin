@@ -1,9 +1,7 @@
 package ru.tinkoff.load.javaapi.actions;
 
-import ru.tinkoff.load.javaapi.internal.Utils;
-import ru.tinkoff.load.jdbc.actions.actions;
-
 import java.util.Map;
+import static ru.tinkoff.load.javaapi.internal.Utils.getSeq;
 
 public class BatchUpdateBaseAction implements BatchAction {
     private final ru.tinkoff.load.jdbc.actions.actions.BatchUpdateBaseAction wrapped;
@@ -12,7 +10,7 @@ public class BatchUpdateBaseAction implements BatchAction {
     }
 
     public BatchUpdateValuesStepAction set(Map<String, Object> values){
-        return new BatchUpdateValuesStepAction(new actions.BatchUpdateValuesStepAction(wrapped.tableName(),
-                Utils.getSeq(values)));
+        return new BatchUpdateValuesStepAction(new ru.tinkoff.load.jdbc.actions.actions.BatchUpdateValuesStepAction(wrapped.tableName(),
+                getSeq(values)));
     }
 }

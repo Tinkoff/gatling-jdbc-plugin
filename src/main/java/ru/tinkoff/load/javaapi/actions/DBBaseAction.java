@@ -1,11 +1,9 @@
 package ru.tinkoff.load.javaapi.actions;
 
 import io.gatling.javaapi.core.internal.Expressions;
-import ru.tinkoff.load.jdbc.actions.actions;
-
 import java.util.Arrays;
-
 import static scala.jdk.javaapi.CollectionConverters.asScala;
+import static ru.tinkoff.load.javaapi.internal.BatchBase.toScalaBatch;
 
 public final class DBBaseAction{
 
@@ -19,7 +17,7 @@ public final class DBBaseAction{
         return new DBInsertActionValuesStep(
                 wrapped.insertInto(
                         Expressions.toStringExpression(tableName),
-                        new actions.Columns(
+                        new ru.tinkoff.load.jdbc.actions.actions.Columns(
                                 asScala(
                                         Arrays
                                                 .stream(columns)
@@ -48,7 +46,7 @@ public final class DBBaseAction{
         return new BatchActionBuilder(
             wrapped.batch(
                     asScala(Arrays.stream(actions).map(x ->
-                            ru.tinkoff.load.javaapi.actions.BatchBase.toScalaBatch(x))
+                            toScalaBatch(x))
                             .toList()).toSeq()
             ));
     }

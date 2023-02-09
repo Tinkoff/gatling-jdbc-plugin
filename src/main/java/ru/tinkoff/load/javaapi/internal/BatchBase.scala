@@ -1,4 +1,4 @@
-package ru.tinkoff.load.javaapi.actions
+package ru.tinkoff.load.javaapi.internal
 
 import ru.tinkoff.load.jdbc.actions.actions
 

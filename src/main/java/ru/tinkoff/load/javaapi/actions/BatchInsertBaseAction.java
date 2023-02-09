@@ -9,7 +9,7 @@ public class BatchInsertBaseAction implements BatchAction {
         this.wrapped = batchInsertBaseAction;
     }
 
-    public ru.tinkoff.load.javaapi.actions.BatchInsertAction values(Map<String, Object> ps){
+    public BatchInsertAction values(Map<String, Object> ps){
         return new BatchInsertAction(BatchInsertAction.toScala(wrapped.tableName(), ps, wrapped.columns()));
     }
 

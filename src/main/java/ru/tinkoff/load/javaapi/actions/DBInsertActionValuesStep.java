@@ -1,7 +1,6 @@
 package ru.tinkoff.load.javaapi.actions;
 
 import java.util.Map;
-
 import static ru.tinkoff.load.javaapi.internal.Utils.getSeq;
 
 public class DBInsertActionValuesStep {
@@ -12,7 +11,6 @@ public class DBInsertActionValuesStep {
     }
 
     public DBInsertActionBuilder values(Map<String, Object> vals){
-
         return new DBInsertActionBuilder(wrapped.values(
                 getSeq(vals)
         ));

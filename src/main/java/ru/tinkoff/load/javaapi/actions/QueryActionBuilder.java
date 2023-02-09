@@ -1,10 +1,9 @@
 package ru.tinkoff.load.javaapi.actions;
 
 import io.gatling.javaapi.core.ActionBuilder;
-import ru.tinkoff.load.javaapi.check.JdbcCheck;
-
 import java.util.Arrays;
 import java.util.List;
+import static ru.tinkoff.load.javaapi.internal.JdbcCheck.toScalaChecks;
 
 public class QueryActionBuilder implements ActionBuilder {
     private ru.tinkoff.load.jdbc.actions.actions.QueryActionBuilder wrapped;
@@ -18,7 +17,7 @@ public class QueryActionBuilder implements ActionBuilder {
     }
 
     public QueryActionBuilder check(List<Object> checks) {
-        this.wrapped = wrapped.check(JdbcCheck.toScalaChecks(checks));
+        this.wrapped = wrapped.check(toScalaChecks(checks));
         return this;
     }
 

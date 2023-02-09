@@ -1,16 +1,10 @@
 package ru.tinkoff.load.jdbc.test.cases;
 
-import ru.tinkoff.load.javaapi.JdbcDsl;
-import ru.tinkoff.load.javaapi.JdbcDsl.*;
 import ru.tinkoff.load.javaapi.actions.*;
-import ru.tinkoff.load.javaapi.check.JdbcCheck;
 import ru.tinkoff.load.javaapi.check.simpleCheckType;
-import ru.tinkoff.load.jdbc.actions.actions;
+import static ru.tinkoff.load.javaapi.internal.JdbcCheck.*;
 
-import java.util.HashMap;
 import java.util.Map;
-
-import static io.gatling.javaapi.jms.JmsDsl.simpleCheck;
 import static ru.tinkoff.load.javaapi.JdbcDsl.*;
 
 public class JdbcActions {
@@ -58,21 +52,21 @@ public class JdbcActions {
 
     public static QueryActionBuilder selectTT(){
         return jdbc("select tt").query("SELECT * FROM TT")
-                .check(JdbcCheck.simpleCheck(simpleCheckType.NonEmpty),
-                        JdbcCheck.results().saveAs("ttr"));
+                .check(simpleCheck(simpleCheckType.NonEmpty),
+                        results().saveAs("ttr"));
     }
 
     public static QueryActionBuilder selectTest(){
         return jdbc("SELECT TEST")
                 .queryP("SELECT * FROM TEST_TABLE WHERE ID = {id}")
                 .params(Map.of("id", 1))
-                .check(JdbcCheck.simpleCheck(simpleCheckType.NonEmpty),
-                        JdbcCheck.results().saveAs("R"));
+                .check(simpleCheck(simpleCheckType.NonEmpty),
+                        results().saveAs("R"));
     }
 
     public static QueryActionBuilder selectAfterBatch(){
         return jdbc("SELECT SOME")
                 .query("SELECT * FROM TEST_TABLE")
-                .check(JdbcCheck.results().saveAs("RR"));
+                .check(results().saveAs("RR"));
     }
 }

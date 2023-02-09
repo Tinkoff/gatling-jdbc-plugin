@@ -1,8 +1,9 @@
 package ru.tinkoff.load.javaapi.actions;
 
 import ru.tinkoff.load.javaapi.internal.Utils;
-
 import java.util.Map;
+
+import static ru.tinkoff.load.javaapi.internal.Utils.getSeq;
 
 public class DBCallActionParamStep {
     private final ru.tinkoff.load.jdbc.actions.actions.DBCallActionParamsStep wrapped;
@@ -13,7 +14,7 @@ public class DBCallActionParamStep {
 
     public DBCallActionBuilder params(Map<String, Object> values){
         return new DBCallActionBuilder(wrapped.params(
-                Utils.getSeq(values))
+                getSeq(values))
         );
     }
 }

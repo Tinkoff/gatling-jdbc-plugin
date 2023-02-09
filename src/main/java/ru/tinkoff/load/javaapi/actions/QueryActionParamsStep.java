@@ -4,6 +4,8 @@ import ru.tinkoff.load.javaapi.internal.Utils;
 
 import java.util.Map;
 
+import static ru.tinkoff.load.javaapi.internal.Utils.getSeq;
+
 public class QueryActionParamsStep {
     private final ru.tinkoff.load.jdbc.actions.actions.QueryActionParamsStep wrapped;
 
@@ -13,7 +15,7 @@ public class QueryActionParamsStep {
 
     public QueryActionBuilder params(Map<String, Object> values){
         return new QueryActionBuilder  (wrapped.params(
-                Utils.getSeq(values)
+                getSeq(values)
         ));
     }
 }

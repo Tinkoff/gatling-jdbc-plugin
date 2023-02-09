@@ -2,13 +2,12 @@ package ru.tinkoff.load.jdbc.test
 
 import io.gatling.javaapi.core.CoreDsl.*
 import io.gatling.javaapi.core.*
-import ru.tinkoff.load.jdbc.test.scenarios.JdbcBasicSimulation.scn
+import ru.tinkoff.load.jdbc.test.scenarios.KtJdbcBasicSimulation.scn
 
-
-class JdbcDebugTest : Simulation()  {
+class KtJdbcDebugTest : Simulation()  {
     init{
             setUp(
                     scn.injectOpen(atOnceUsers(1))
-            ).protocols(JdbcProtocol.dataBase)
+            ).protocols(KtJdbcProtocol.dataBase)
     }
 }
