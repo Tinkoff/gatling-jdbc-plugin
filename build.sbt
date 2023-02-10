@@ -1,12 +1,12 @@
 import Dependencies._
 
 lazy val root = (project in file("."))
-  .enablePlugins(GitVersioning)
+  .enablePlugins(GitVersioning, GatlingPlugin)
   .settings(
     name         := "gatling-jdbc-plugin",
     scalaVersion := "2.13.10",
     libraryDependencies ++= gatling,
-    libraryDependencies ++= Seq(hikari, h2jdbc, postgresJdbc),
+    libraryDependencies ++= Seq(hikari, h2jdbc),
     scalacOptions ++= Seq(
       "-encoding",
       "UTF-8",            // Option and arguments on same line
