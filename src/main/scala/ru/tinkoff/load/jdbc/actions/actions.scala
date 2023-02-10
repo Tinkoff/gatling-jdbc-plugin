@@ -1,11 +1,12 @@
-package ru.tinkoff.load.jdbc
+package ru.tinkoff.load.jdbc.actions
 
 import io.gatling.core.action.Action
 import io.gatling.core.action.builder.ActionBuilder
 import io.gatling.core.session.Expression
 import io.gatling.core.structure.ScenarioContext
+import ru.tinkoff.load.jdbc.JdbcCheck
 
-package object actions {
+object actions {
   case class DBBaseAction(requestName: Expression[String]) {
     def insertInto(tableName: Expression[String], columns: Columns): DBInsertActionValuesStep =
       DBInsertActionValuesStep(requestName, tableName, columns)
