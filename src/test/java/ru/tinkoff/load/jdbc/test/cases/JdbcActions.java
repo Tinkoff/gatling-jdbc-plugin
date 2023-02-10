@@ -2,7 +2,6 @@ package ru.tinkoff.load.jdbc.test.cases;
 
 import ru.tinkoff.load.javaapi.actions.*;
 import ru.tinkoff.load.javaapi.check.simpleCheckType;
-import static ru.tinkoff.load.javaapi.internal.JdbcCheck.*;
 
 import java.util.Map;
 import static ru.tinkoff.load.javaapi.JdbcDsl.*;
@@ -53,7 +52,7 @@ public class JdbcActions {
     public static QueryActionBuilder selectTT(){
         return jdbc("select tt").query("SELECT * FROM TT")
                 .check(simpleCheck(simpleCheckType.NonEmpty),
-                        results().saveAs("ttr"));
+                        allResults().saveAs("ttr"));
     }
 
     public static QueryActionBuilder selectTest(){
@@ -61,12 +60,12 @@ public class JdbcActions {
                 .queryP("SELECT * FROM TEST_TABLE WHERE ID = {id}")
                 .params(Map.of("id", 1))
                 .check(simpleCheck(simpleCheckType.NonEmpty),
-                        results().saveAs("R"));
+                        allResults().saveAs("R"));
     }
 
     public static QueryActionBuilder selectAfterBatch(){
         return jdbc("SELECT SOME")
                 .query("SELECT * FROM TEST_TABLE")
-                .check(results().saveAs("RR"));
+                .check(allResults().saveAs("RR"));
     }
 }

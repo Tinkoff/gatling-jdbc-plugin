@@ -3,7 +3,6 @@ package ru.tinkoff.load.javaapi.actions;
 import io.gatling.javaapi.core.internal.Expressions;
 import java.util.Arrays;
 import static scala.jdk.javaapi.CollectionConverters.asScala;
-import static ru.tinkoff.load.javaapi.internal.BatchBase.toScalaBatch;
 
 public final class DBBaseAction{
 
@@ -46,7 +45,7 @@ public final class DBBaseAction{
         return new BatchActionBuilder(
             wrapped.batch(
                     asScala(Arrays.stream(actions).map(x ->
-                            toScalaBatch(x))
+                                    ru.tinkoff.load.jdbc.internal.BatchBase.toScalaBatch(x))
                             .toList()).toSeq()
             ));
     }

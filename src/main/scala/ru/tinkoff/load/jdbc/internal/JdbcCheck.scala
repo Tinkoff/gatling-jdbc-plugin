@@ -1,27 +1,22 @@
-package ru.tinkoff.load.javaapi.internal
+package ru.tinkoff.load.jdbc.internal
 
+import io.gatling.core.check._
 import io.gatling.core.check.Check.Simple
 import io.gatling.core.check.CheckBuilder.Final
-import io.gatling.core.check.CheckBuilder.Final._
-import io.gatling.core.check._
-import ru.tinkoff.load.jdbc.Predef._
-import ru.tinkoff.load.jdbc._
+import ru.tinkoff.load.jdbc.JdbcCheck
+import ru.tinkoff.load.jdbc.check.JdbcCheckSupport
 import io.gatling.core.Predef.find2Final
-
+import io.gatling.core.check.CheckBuilder.Final._
 import scala.jdk.CollectionConverters.CollectionHasAsScala
 
-object JdbcCheck {
+object JdbcCheck extends JdbcCheckSupport {
 
-  case class JdbcCheckTypeWrapper(value: Check[JdbcCheck]) {}
-
-  case class SimpleWrapper(value: Simple[JdbcCheck])
-
-  def simpleCheck(t: ru.tinkoff.load.javaapi.check.simpleCheckType): Simple[AllRecordResult] = {
-    t match {
+  def simpleJavaCheck(checkType: ru.tinkoff.load.javaapi.check.simpleCheckType): Simple[AllRecordResult] = {
+    checkType match {
       case ru.tinkoff.load.javaapi.check.simpleCheckType.NonEmpty =>
-        Predef.simpleCheck(x => x.nonEmpty).asInstanceOf[Simple[AllRecordResult]]
+        simpleCheck(x => x.nonEmpty).asInstanceOf[Simple[AllRecordResult]]
       case ru.tinkoff.load.javaapi.check.simpleCheckType.Empty    =>
-        Predef.simpleCheck(x => x.isEmpty).asInstanceOf[Simple[AllRecordResult]]
+        simpleCheck(x => x.isEmpty).asInstanceOf[Simple[AllRecordResult]]
     }
   }
 
@@ -33,7 +28,7 @@ object JdbcCheck {
       case simpleCheck: Simple[_]                            => simpleCheck.asInstanceOf[Simple[AllRecordResult]]
       case defaultCheck: CheckBuilder.Final.Default[_, _, _] =>
         checkBuilder2JdbcCheck(
-          defaultCheck.asInstanceOf[Default[Predef.JdbcAllRecordCheckType, AllRecordResult, AllRecordResult]],
+          defaultCheck.asInstanceOf[Default[JdbcAllRecordCheckType, AllRecordResult, AllRecordResult]],
         )
       case unknown                                           => throw new IllegalArgumentException(s"JDBC DSL doesn't support $unknown")
     }

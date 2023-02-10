@@ -1,7 +1,6 @@
 package ru.tinkoff.load.jdbc.test.cases
 
 import ru.tinkoff.load.javaapi.JdbcDsl.*
-import ru.tinkoff.load.javaapi.internal.JdbcCheck
 import ru.tinkoff.load.javaapi.check.simpleCheckType.*
 import ru.tinkoff.load.javaapi.actions.*
 import ru.tinkoff.load.javaapi.check.simpleCheckType
@@ -49,21 +48,21 @@ object KtJdbcActions {
 
     fun selectTT(): QueryActionBuilder {
         return jdbc("select tt").query("SELECT * FROM TT")
-                .check(JdbcCheck.simpleCheck(simpleCheckType.NonEmpty),
-                        JdbcCheck.results().saveAs("ttr"))
+                .check(simpleCheck(simpleCheckType.NonEmpty),
+                        allResults().saveAs("ttr"))
     }
 
     fun selectTest(): QueryActionBuilder {
         return jdbc("SELECT TEST")
                 .queryP("SELECT * FROM TEST_TABLE WHERE ID = {id}")
                 .params(mapOf("id" to 1))
-                .check(JdbcCheck.simpleCheck(simpleCheckType.NonEmpty),
-                        JdbcCheck.results().saveAs("R"))
+                .check(simpleCheck(simpleCheckType.NonEmpty),
+                        allResults().saveAs("R"))
     }
 
     fun selectAfterBatch(): QueryActionBuilder {
         return jdbc("SELECT SOME")
                 .query("SELECT * FROM TEST_TABLE")
-                .check(JdbcCheck.results().saveAs("RR"))
+                .check(allResults().saveAs("RR"))
     }
 }

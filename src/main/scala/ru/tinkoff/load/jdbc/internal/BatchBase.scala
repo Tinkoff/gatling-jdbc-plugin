@@ -1,10 +1,10 @@
-package ru.tinkoff.load.javaapi.internal
+package ru.tinkoff.load.jdbc.internal
 
-import ru.tinkoff.load.jdbc.actions.actions
+import ru.tinkoff.load.jdbc.actions.actions.BatchAction
 
 object BatchBase {
 
-  def toScalaBatch(batchAction: Object): actions.BatchAction = {
+  def toScalaBatch(batchAction: Object): BatchAction = {
     batchAction match {
       case insert: ru.tinkoff.load.javaapi.actions.BatchInsertAction => insert.wrapped
       case update: ru.tinkoff.load.javaapi.actions.BatchUpdateAction => update.wrapped
