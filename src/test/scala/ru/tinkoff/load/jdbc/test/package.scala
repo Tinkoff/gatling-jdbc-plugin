@@ -34,9 +34,9 @@ package object test {
   def anyOf[T](vs: T*): T                  = vs(gen.nextInt(vs.size))
 
   val dataBase: JdbcProtocolBuilder = DB
-    .url("jdbc:h2:mem:test")
-    .username("sa")
-    .password("")
+    .url("jdbc:postgresql://postgres:5432/test_db")
+    .username("postgres")
+    .password("secret")
     .maximumPoolSize(23)
     .connectionTimeout(2.minute)
 

@@ -11,6 +11,17 @@ jobs:
   test:
     name: Test Release
     runs-on: ubuntu-20.04
+    services:
+      postgres:
+        image: postgres:12-alpine
+        environment:
+          POSTGRES_DB: "test_db"
+          POSTGRES_PASSWORD: "secret"
+          POSTGRES_USER: postgres
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - '5432:5432'
+
     steps:
       - name: Checkout
         uses: actions/checkout@v2.4.0
@@ -24,6 +35,12 @@ jobs:
 
       - name: Test Release
         run: sbt clean scalafmtCheckAll scalafmtSbtCheck compile test
+
+      - name: Tests
+        run: sbt clean coverage "Gatling / testOnly ru.tinkoff.load.jdbc.test.DebugTest" coverageReport
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
 
   publish:
     name: Publish Release
