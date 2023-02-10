@@ -6,7 +6,7 @@ import ru.tinkoff.load.javaapi.actions.BatchUpdateBaseAction;
 import ru.tinkoff.load.javaapi.actions.DBBaseAction;
 import ru.tinkoff.load.javaapi.check.simpleCheckType;
 import ru.tinkoff.load.javaapi.protocol.JdbcProtocolBuilderBase;
-import ru.tinkoff.load.jdbc.actions.actions;
+import ru.tinkoff.load.jdbc.check.JdbcCheckSupport;
 
 import javax.annotation.Nonnull;
 import java.util.Arrays;
@@ -27,7 +27,7 @@ public final class JdbcDsl {
     @Nonnull
     public static BatchInsertBaseAction insetInto(@Nonnull String tableName, String... columns){
         return new BatchInsertBaseAction(ru.tinkoff.load.jdbc.Predef.insertInto(Expressions.toStringExpression(tableName),
-                new actions.Columns(
+                new ru.tinkoff.load.jdbc.actions.actions.Columns(
                         asScala(
                                 Arrays
                                         .stream(columns)
@@ -46,7 +46,7 @@ public final class JdbcDsl {
     }
 
     @Nonnull
-    public static io.gatling.core.check.CheckBuilder.Final<ru.tinkoff.load.jdbc.check.JdbcCheckSupport.JdbcAllRecordCheckType,scala.collection.immutable.List<scala.collection.immutable.Map<java.lang.String,java.lang.Object>>> allResults(){
+    public static io.gatling.core.check.CheckBuilder.Final<JdbcCheckSupport.JdbcAllRecordCheckType,scala.collection.immutable.List<scala.collection.immutable.Map<java.lang.String,java.lang.Object>>> allResults(){
         return ru.tinkoff.load.jdbc.internal.JdbcCheck.results();
     }
 
