@@ -17,7 +17,7 @@ class BasicSimulation {
   val f: Feeder[Long] = Iterator.continually(c.getAndIncrement()).map(i => Map("i" -> i))
 
   val scn: ScenarioBuilder = scenario("Basic")
-//    .exec(Actions.createTable())
+    .exec(Actions.createTable())
     .exec(Actions.createProcedure())
     .doWhile(_("i").as[Long] < 2)(
       feed(f)
