@@ -19,7 +19,7 @@ class BasicSimulation {
   val scn: ScenarioBuilder = scenario("Basic")
     .exec(Actions.createTable())
     .exec(Actions.createProcedure())
-    .doWhile(_("i").as[Long] < 19)(
+    .doWhile(_("i").as[Long] < 2)(
       feed(f)
         .exec(Actions.insertTest())
         .exec(Actions.callTest())

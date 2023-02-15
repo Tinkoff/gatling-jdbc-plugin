@@ -10,5 +10,8 @@ class DebugTest extends Simulation {
     BasicSimulation().inject(atOnceUsers(1)),
   ).protocols(dataBase)
     .maxDuration(60)
+    .assertions(
+      global.failedRequests.percent.is(0.0),
+    )
 
 }
