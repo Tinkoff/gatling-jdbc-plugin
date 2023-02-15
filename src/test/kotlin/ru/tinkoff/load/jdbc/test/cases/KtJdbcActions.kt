@@ -15,9 +15,9 @@ object KtJdbcActions {
     fun createprocedure(): RawSqlActionBuilder {
         return jdbc("Procedure create")
                 .rawSql("""
-                    CREATE OR REPLACE PROCEDURE TEST_PROCEDURE(p1 varchar(10), p2 integer) 
-                    LANGUAGE SQL 
-                    AS $$ 
+                    CREATE OR REPLACE PROCEDURE TEST_PROCEDURE(p1 varchar(10), p2 integer)
+                    LANGUAGE SQL
+                    AS $$
                         select 1 as result;
                     $$;
                 """
