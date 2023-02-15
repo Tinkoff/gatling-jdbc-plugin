@@ -15,4 +15,4 @@ libraryDependencies += "ru.tinkoff" %% "gatling-jdbc-plugin" % <version> % Test
 ``` 
 
 ## Example Scenarios
-Examples [here](https://github.com/Tinkoff/gatling-jdbc-plugin/tree/master/src/test/scala/ru/tinkoff/load/jdbc/test)
+Examples [here](https://github.com/Tinkoff/gatling-jdbc-plugin/tree/master/src/test)
