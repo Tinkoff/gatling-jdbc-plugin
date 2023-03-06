@@ -34,5 +34,7 @@ class BasicSimulation {
       println(s("RR").as[List[Map[String, Any]]])
       s
     }
+    .exec(Actions.checkBatchTestTable)
+    .exec(Actions.checkBatchTT)
 
 }
