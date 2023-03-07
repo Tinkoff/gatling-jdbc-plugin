@@ -56,7 +56,6 @@ class JDBCClient(pool: HikariDataSource, blockingPool: ExecutorService) {
                         _ <- s.close
                       } yield (),
                     )
-
     } yield stmt
 
   private def statementResource: ResourceFut[StatementWrapper[Future]] =
@@ -116,19 +115,13 @@ class JDBCClient(pool: HikariDataSource, blockingPool: ExecutorService) {
   ): Unit =
     withCompletion(callableStatementResource(sqlCall, params.toMap, outParams.toMap).use(_.executeUpdate))(s, f)
 
-  def batch[U](queries: Seq[SqlWithParam], batchSize: Int = 1000)(s: Array[Int] => U, f: Throwable => U): Unit =
+  def batch[U](queries: Seq[SqlWithParam])(s: Array[Int] => U, f: Throwable => U): Unit =
     withCompletion(
       statementForBatchResource.use(stmt =>
         queries
-          .map(_.substituteParams)
-          .grouped(batchSize)
-          .map(batch =>
-            batch
-              .map(query => stmt.addBatch(query))
-              .reduce((f1, f2) => f1.flatMap(_ => f2))
-              .flatMap(_ => stmt.executeBatch),
-          )
-          .reduce((f1, f2) => f1.flatMap(a1 => f2.map(a2 => a1 ++ a2))),
+          .map(query => stmt.addBatch(query.substituteParams))
+          .reduce((f1, f2) => f1.flatMap(_ => f2))
+          .flatMap(_ => stmt.executeBatch),
       ),
     )(s, f)
 

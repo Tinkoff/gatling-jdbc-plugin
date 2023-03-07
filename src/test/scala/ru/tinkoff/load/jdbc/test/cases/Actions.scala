@@ -64,4 +64,23 @@ object Actions {
         allResults.saveAs("RR"),
       )
 
+  def checkBatchTestTable: QueryActionBuilder =
+    jdbc("SELECT TEST_TABLE AFTER BATCH")
+      .query("""SELECT * FROM TEST_TABLE
+          |WHERE ID IN (20, 30, 40, 2)
+          |AND EXISTS(SELECT NAME FROM TEST_TABLE
+          |WHERE ID=2 AND NAME = 'bird')
+          |""".stripMargin)
+      .check(
+        simpleCheck(x => x.length == 4),
+      )
+
+  def checkBatchTT: QueryActionBuilder =
+    jdbc("SELECT TT AFTER BATCH")
+      .query("""SELECT * FROM TT
+          |WHERE NAME = 'OOO342ff'
+          |""".stripMargin)
+      .check(
+        simpleCheck(x => x.length == 1),
+      )
 }

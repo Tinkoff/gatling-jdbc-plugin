@@ -1,9 +1,10 @@
 package ru.tinkoff.load.jdbc.test.cases
 
 import ru.tinkoff.load.javaapi.JdbcDsl.*
-import ru.tinkoff.load.javaapi.check.simpleCheckType.*
 import ru.tinkoff.load.javaapi.actions.*
 import ru.tinkoff.load.javaapi.check.simpleCheckType
+import java.util.*
+import java.util.Map
 
 object KtJdbcActions {
     fun createTable(): RawSqlActionBuilder {
@@ -15,11 +16,12 @@ object KtJdbcActions {
     fun createprocedure(): RawSqlActionBuilder {
         return jdbc("Procedure create")
                 .rawSql("""
-                    CREATE OR REPLACE PROCEDURE TEST_PROCEDURE(p1 varchar(10), p2 integer)
-                    LANGUAGE SQL
-                    AS $$
-                        select 1 as result;
-                    $$;
+                     CREATE ALIAS TEST_PROCEDURE AS ${'$'}${'$'}
+                                String testProcedure(String p1, Long p2) {
+                                    String suf = p1 + "test";
+                                    return p2.toString() + suf;
+                                }
+                                ${'$'}${'$'};
                 """
                 )
     }
@@ -42,7 +44,8 @@ object KtJdbcActions {
                         .values(mapOf("ID" to 20, "NAME" to "Test 12", "FLAG" to true)),
                 insetInto("TEST_TABLE", "ID", "NAME")
                         .values(mapOf("ID" to 40, "NAME" to "Test 34")),
-                update("TEST_TABLE").set(mapOf("NAME" to "Test5")).where("ID = 2")
+                update("TEST_TABLE").set(mapOf("NAME" to "Test5")).where("ID = 2"),
+                insetInto("TT", "ID", "NAME").values(mapOf("ID" to UUID.randomUUID(), "NAME" to "OOO342ff"))
         )
     }
 
@@ -55,7 +58,7 @@ object KtJdbcActions {
     fun selectTest(): QueryActionBuilder {
         return jdbc("SELECT TEST")
                 .queryP("SELECT * FROM TEST_TABLE WHERE ID = {id}")
-                .params(mapOf("id" to 1))
+                .params(mapOf("id" to 20))
                 .check(simpleCheck(simpleCheckType.NonEmpty),
                         allResults().saveAs("R"))
     }
@@ -64,5 +67,14 @@ object KtJdbcActions {
         return jdbc("SELECT SOME")
                 .query("SELECT * FROM TEST_TABLE")
                 .check(allResults().saveAs("RR"))
+    }
+
+    fun checkTestTableAfterBatch(): QueryActionBuilder {
+        return jdbc("Check TEST_TABLE")
+            .query(
+                "SELECT * FROM TEST_TABLE WHERE EXISTS(SELECT NAME FROM TEST_TABLE WHERE ID = 2 AND NAME = 'Test5')" +
+                        "AND (SELECT COUNT(ID) FROM TEST_TABLE WHERE ID IN (20, 40, 2)) = 3"
+            )
+            .check(simpleCheck(simpleCheckType.NonEmpty))
     }
 }
