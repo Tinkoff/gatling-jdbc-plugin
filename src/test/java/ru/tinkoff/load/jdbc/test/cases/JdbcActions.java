@@ -4,6 +4,8 @@ import ru.tinkoff.load.javaapi.actions.*;
 import ru.tinkoff.load.javaapi.check.simpleCheckType;
 
 import java.util.Map;
+import java.util.UUID;
+
 import static ru.tinkoff.load.javaapi.JdbcDsl.*;
 
 public class JdbcActions {
@@ -18,10 +20,11 @@ public class JdbcActions {
         return jdbc("Procedure create")
                 .rawSql(
                         """
-                                CREATE OR REPLACE PROCEDURE TEST_PROCEDURE(p1 varchar(10), p2 integer) 
-                                LANGUAGE SQL 
-                                AS $$ 
-                                    select 1 as result;
+                                CREATE ALIAS TEST_PROCEDURE AS $$
+                                String testProcedure(String p1, Long p2) {
+                                    String suf = p1 + "test";
+                                    return p2.toString() + suf;
+                                }
                                 $$;
                                 """
                 );
@@ -45,7 +48,8 @@ public class JdbcActions {
                         .values(Map.of("ID", 20, "NAME", "Test 12", "FLAG", true)),
                 insetInto("TEST_TABLE", "ID", "NAME")
                         .values(Map.of("ID", 40, "NAME", "Test 34")),
-                update("TEST_TABLE").set(Map.of("NAME", "Test5")).where("ID = 2")
+                update("TEST_TABLE").set(Map.of("NAME", "Test5")).where("ID = 2"),
+                insetInto("TT", "ID", "NAME").values(Map.of("ID", UUID.randomUUID(), "NAME", "OOO342ff"))
         );
     }
 
@@ -58,7 +62,7 @@ public class JdbcActions {
     public static QueryActionBuilder selectTest(){
         return jdbc("SELECT TEST")
                 .queryP("SELECT * FROM TEST_TABLE WHERE ID = {id}")
-                .params(Map.of("id", 1))
+                .params(Map.of("id", 20))
                 .check(simpleCheck(simpleCheckType.NonEmpty),
                         allResults().saveAs("R"));
     }
@@ -67,5 +71,12 @@ public class JdbcActions {
         return jdbc("SELECT SOME")
                 .query("SELECT * FROM TEST_TABLE")
                 .check(allResults().saveAs("RR"));
+    }
+
+    public static QueryActionBuilder checkTestTableAfterBatch(){
+        return jdbc("Check TEST_TABLE")
+                .query("SELECT * FROM TEST_TABLE WHERE EXISTS(SELECT NAME FROM TEST_TABLE WHERE ID = 2 AND NAME = 'Test5')" +
+                        "AND (SELECT COUNT(ID) FROM TEST_TABLE WHERE ID IN (20, 40, 2)) = 3")
+                .check(simpleCheck(simpleCheckType.NonEmpty));
     }
 }
