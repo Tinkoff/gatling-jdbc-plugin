@@ -15,6 +15,6 @@ object Dependencies {
   ).map(_ % gatlingVersion % "it,test")
 
   lazy val hikari = "com.zaxxer"     % "HikariCP" % "5.0.1" exclude ("org.slf4j", "slf4j-api")
-  lazy val h2jdbc = "com.h2database" % "h2"       % "2.1.214" % Test
+  lazy val h2jdbc = "com.h2database" % "h2"       % "2.2.220" % Test
 
 }
